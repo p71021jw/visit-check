@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#00453A">
+<meta name="color-scheme" content="light">
+<title>하나은행 방문관리 체크표</title>
+<style>
+:root{
+  --hana:#00806B;--hana-deep:#004E41;--hana-mid:#0E9E86;
+  --mint:#E9F4F0;--line:#DDE8E4;--ink:#12201C;--sub:#5E726B;
+  --amber:#B0791F;--bg:#F3F6F5;--red:#B4402F;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:"Pretendard",-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  max-width:760px;margin:0 auto;min-height:100vh;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  padding-bottom:calc(84px + env(safe-area-inset-bottom));
+  overflow-x:hidden;
+}
+/* ── 상단 그린 헤더 ── */
+.hero{position:relative;overflow:hidden;color:#fff;padding:15px 18px 48px;
+  background:linear-gradient(152deg,#00453A 0%,#006A57 56%,#0E9E86 100%)}
+.hero:after{content:"";position:absolute;right:-52px;top:-64px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07)}
+.hero:before{content:"";position:absolute;right:22px;top:74px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.05)}
+.brand{position:relative;display:flex;align-items:center;gap:7px;font-size:11px;color:#C9E6DE;letter-spacing:.01em}
+.brand b{color:#fff;font-weight:700}
+.brand i{width:1px;height:10px;background:rgba(255,255,255,.32);display:block}
+.badge{margin-left:auto;position:relative;padding:4px 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.04em;
+  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)}
+h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+.hero-sub{position:relative;margin:0;font-size:11.5px;line-height:1.5;color:#BEE0D7}
+/* ── 요약 카드 ── */
+.summary{position:relative;z-index:2;margin:-32px 14px 0;background:#fff;border-radius:16px;
+  padding:13px 15px 11px;box-shadow:0 10px 24px rgba(2,48,40,.13),0 1px 0 rgba(0,0,0,.02);border:1px solid #EBF2EF}
+.nums{display:flex;align-items:flex-end;gap:15px}
+.num{display:flex;flex-direction:column;justify-content:flex-end;gap:0}
+.num b{display:block;height:22px;line-height:22px;font-size:22px;font-weight:800;letter-spacing:-.03em;font-feature-settings:"tnum"}
+.num span{display:block;height:14px;line-height:14px;font-size:10px;color:var(--sub);font-weight:500;white-space:nowrap}
+.num.done b{color:var(--hana)}
+.num.left b{color:#9A6412}
+.pct{margin-left:auto;text-align:right;line-height:1.1}
+.pct b{display:block;height:20px;line-height:20px;font-size:18px;font-weight:800;color:var(--hana);letter-spacing:-.03em}
+.pct span{display:block;height:13px;line-height:13px;font-size:9.5px;color:var(--sub)}
+.bar{height:8px;border-radius:99px;background:#E4EFEA;margin:11px 0 8px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#39C4A6,#00806B);
+  transition:width .38s cubic-bezier(.3,.9,.3,1)}
+.sumnote{display:flex;justify-content:space-between;gap:8px;font-size:9.5px;color:var(--sub);line-height:1.4}
+.sumnote b{font-weight:600;color:#3F5A53}
+/* ── 탭 + 목록/지도 전환 + 검색 (스크롤해도 위에 붙음) ── */
+.topbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 14px 8px}
+.vrow{display:flex;align-items:center;gap:8px;margin:0 0 8px}
+.viewtog{display:flex;gap:2px;background:#E7EFEC;border:1px solid var(--line);border-radius:999px;padding:2px}
+.vt{display:flex;align-items:center;justify-content:center;gap:4px;border:0;background:transparent;font:inherit;
+  font-size:11.5px;font-weight:700;color:#4A655D;padding:5px 12px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.vt svg{width:12px;height:12px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linejoin:round}
+.vt.on{background:#fff;color:var(--hana-deep);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.vhint{margin-left:auto;font-size:9.5px;color:var(--sub);line-height:1.3;text-align:right}
+.tabs{display:flex;gap:5px;padding:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:6px 10px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--line);background:#fff;color:#456059;font:inherit;font-size:11.5px;font-weight:600;white-space:nowrap}
+.tab b{font-size:9.5px;font-weight:700;color:#6C837B;margin-left:4px}
+.tab.on{background:var(--hana-deep);border-color:var(--hana-deep);color:#fff;box-shadow:0 4px 10px rgba(0,78,65,.22)}
+.tab.on b{color:rgba(255,255,255,.8)}
+.search{display:flex;align-items:center;gap:7px;margin-top:8px;height:38px;padding:0 11px;
+  background:#fff;border:1px solid var(--line);border-radius:11px}
+.search>svg{width:15px;height:15px;flex:0 0 auto;stroke:#7D918A;fill:none;stroke-width:2}
+.search input{flex:1;min-width:0;border:0;background:transparent;font:inherit;font-size:13px;color:var(--ink);padding:0;height:100%}
+.search input:focus{outline:none}
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-decoration{display:none}
+#q-clear{flex:0 0 auto;width:20px;height:20px;border:0;border-radius:50%;background:#EDF3F1;color:#5E726B;
+  font:inherit;font-size:12px;line-height:1;padding:0;cursor:pointer;display:none}
+#q-clear.on{display:block}
+.sresult{display:flex;justify-content:space-between;gap:8px;padding:7px 2px 0;font-size:10px;color:var(--sub);line-height:1.4}
+.sresult b{font-weight:600;color:#3F5A53}
+.sresult[hidden]{display:none}
+/* ── 카드 목록 ── */
+#list{display:flex;flex-direction:column;gap:9px;padding:4px 14px 8px}
+#list[hidden],#searchrow[hidden],#mapview[hidden]{display:none}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px 12px 10px;
+  transition:background .18s,border-color .18s,box-shadow .18s}
+.card.done{background:#F1FAF6;border-color:#A6DCC8}
+.card.pending{box-shadow:0 0 0 2px rgba(0,128,107,.12)}
+.card-top{display:flex;gap:10px;align-items:flex-start}
+.check{flex:0 0 auto;width:46px;height:46px;padding:0;display:grid;place-items:center;cursor:pointer;
+  border-radius:13px;border:2px solid #BBD1CA;background:#fff;transition:.18s}
+.check svg{width:25px;height:25px;fill:none;stroke:#fff;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;
+  opacity:0;transform:scale(.55);transition:.18s}
+.check:active{transform:scale(.95)}
+.card.done .check{background:linear-gradient(145deg,#14AB8D,#00796A);border-color:#00796A;box-shadow:0 4px 10px rgba(0,121,106,.22)}
+.card.done .check svg{opacity:1;transform:scale(1)}
+.info{min-width:0;flex:1;padding-top:1px}
+.seq{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;margin-right:2px;
+  border-radius:6px;background:#EEF4F1;color:#38675B;font-size:10.5px;font-weight:800;font-feature-settings:"tnum"}
+.name{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px;font-size:15px;font-weight:700;
+  line-height:1.3;letter-spacing:-.02em;color:var(--ink)}
+.card.done .name{color:#3D7A6B}
+.chip{flex:0 0 auto;font-size:9.5px;font-weight:700;line-height:1.25;color:var(--amber);
+  background:#FBF2E1;border:1px solid #F0E2C6;border-radius:5px;padding:2px 5px}
+.chip.date{color:#0B7F6B;background:var(--mint);border-color:#CBE7DC}
+.meta{margin:0;font-size:10.5px;line-height:1.55;color:var(--sub)}
+.meta span{display:block}
+.meta .wk{color:#3F5A53;font-weight:600}
+.meta .tel-no{color:#00695A;font-weight:600;font-feature-settings:"tnum";letter-spacing:.01em}
+.meta .note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  white-space:pre-line;color:#7C8E87;margin-top:1px}
+.vdate{display:inline-block;margin:6px 0 0;font-size:9.5px;font-weight:600;color:#0B7F6B;
+  background:var(--mint);border-radius:5px;padding:2px 6px;letter-spacing:.01em}
+.card.done .vdate{color:#2F6E5E;background:#DFF1E9}
+.acts{display:flex;gap:6px;margin-top:9px}
+.btn{flex:1;height:37px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:10px;
+  border:1px solid #D6E4DF;background:#fff;color:#2C544A;font-size:11.5px;font-weight:600;text-decoration:none}
+.btn .ico{width:14px;height:14px;flex:0 0 auto}
+.btn.tel{border-color:#BCDBD1;color:#00695A;background:#FAFDFC}
+.btn.off{color:#A6B6B1;border-style:dashed;background:#FBFCFC}
+.btn:active{transform:scale(.985);background:#F3F8F6}
+.memo{width:100%;margin-top:8px;padding:9px 10px;border-radius:9px;border:1px solid #E1EBE7;background:#FBFDFC;
+  font:inherit;font-size:11.5px;color:var(--ink)}
+.memo::placeholder{color:#A5B7B1}
+.memo:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.1)}
+.sec{display:flex;align-items:center;gap:7px;margin:10px 2px 1px;font-size:10px;font-weight:700;color:#6D8279;letter-spacing:.02em}
+.sec:before,.sec:after{content:"";height:1px;background:#DFE9E5;flex:1}
+.empty{padding:34px 18px;text-align:center;font-size:12px;color:var(--sub);line-height:1.6}
+.foot{margin:2px 16px 18px;font-size:9.5px;line-height:1.6;color:#869891;text-align:center}
+/* ── 지도 ── */
+#mapview{padding:0 14px 6px}
+body.mc-open #mapview{padding-bottom:136px}
+#map{height:calc(100vh - 430px);min-height:290px;max-height:600px;border-radius:14px;overflow:hidden;
+  border:1px solid var(--line);background:#E8EEEB}
+.mapnote{margin:8px 2px 0;font-size:10.5px;line-height:1.5;color:var(--sub)}
+.mapnote b{color:#3F5A53}
+.mapnote a{color:var(--hana)}
+.maplegend{display:flex;gap:10px;align-items:center;margin:7px 2px 0;font-size:9.5px;color:var(--sub)}
+.maplegend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+/* 지도 위 번호 핀 */
+.pin{position:relative;width:26px;height:26px;border-radius:50% 50% 50% 5px;transform:rotate(-45deg);
+  background:#E07C1D;border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.34);cursor:pointer;
+  display:flex;align-items:center;justify-content:center}
+.pin span{transform:rotate(45deg);color:#fff;font-size:11px;font-weight:800;line-height:1;font-feature-settings:"tnum"}
+.pin.done{background:#0B9075;opacity:.92}
+.pin.sel{background:#C0392B;transform:rotate(-45deg) scale(1.22);z-index:20;box-shadow:0 3px 10px rgba(0,0,0,.4)}
+/* 지도 하단 고정 카드 */
+.mapcard{position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));z-index:7;max-width:760px;margin:0 auto;
+  padding:0 12px}
+.mapcard[hidden]{display:none}
+.mc{background:#fff;border:1px solid #CFE0DA;border-radius:15px;padding:11px 12px 10px;
+  box-shadow:0 12px 28px rgba(2,48,40,.2)}
+.mc-top{display:flex;gap:9px;align-items:flex-start}
+.mc-no{flex:0 0 auto;min-width:26px;height:26px;padding:0 6px;display:flex;align-items:center;justify-content:center;
+  border-radius:8px;background:#C0392B;color:#fff;font-size:12px;font-weight:800;font-feature-settings:"tnum"}
+.mc-info{min-width:0;flex:1}
+.mc-info h3{margin:0 0 2px;font-size:14px;font-weight:800;line-height:1.3;letter-spacing:-.02em;color:var(--ink)}
+.mc-info p{margin:0;font-size:10.5px;line-height:1.5;color:var(--sub);word-break:break-all}
+.mc-x{flex:0 0 auto;width:26px;height:26px;border:0;border-radius:50%;background:#EEF3F1;color:#5E726B;
+  font:inherit;font-size:13px;line-height:1;cursor:pointer;padding:0}
+.mc-acts{display:flex;gap:6px;margin-top:9px}
+.mc-acts .btn{height:38px;font-size:11.5px}
+.mc-acts .btn.done{background:var(--hana-deep);border-color:var(--hana-deep);color:#fff}
+.mc-acts .btn.done.on{background:#0B9075;border-color:#0B9075}
+.mc-acts .btn.done:disabled{opacity:.6}
+/* ── 하단 저장 바 ── */
+.savebar{position:fixed;bottom:0;left:0;right:0;z-index:8;max-width:760px;margin:0 auto;
+  display:flex;align-items:center;gap:10px;padding:9px 14px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(255,255,255,.95);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.st{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--sub);line-height:1.3;min-width:0}
+.st>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:6px;height:6px;flex:0 0 auto;border-radius:50%;background:#A9BAB4;box-shadow:0 0 0 3px rgba(169,186,180,.15);transition:.2s}
+.dot.ok{background:#12B08E;box-shadow:0 0 0 3px rgba(18,176,142,.14)}
+.dot.busy{background:#E0A93B;box-shadow:0 0 0 3px rgba(224,169,59,.16);animation:pulse 1s ease-in-out infinite}
+.dot.bad{background:var(--red);box-shadow:0 0 0 3px rgba(180,64,47,.16)}
+@keyframes pulse{50%{opacity:.35}}
+#reload{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:6px;border:0;cursor:pointer;
+  background:var(--hana-deep);color:#fff;font:inherit;font-size:12px;font-weight:700;padding:10px 13px;border-radius:10px}
+#reload:active{background:#003D33}
+#reload svg{width:14px;height:14px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.toast{position:fixed;left:50%;bottom:82px;transform:translate(-50%,12px);z-index:9;max-width:330px;text-align:center;
+  background:#12201C;color:#fff;font-size:11.5px;line-height:1.45;padding:9px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+/* ── 첫 로딩 / 오류 ── */
+.boot{position:fixed;inset:0;z-index:20;background:rgba(243,246,245,.94);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:13px;font-size:12.5px;color:var(--sub);padding:30px;text-align:center}
+.boot[hidden]{display:none}
+.spin{width:26px;height:26px;border-radius:50%;border:3px solid #CFE3DC;border-top-color:var(--hana);animation:sp .85s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.boot .err{color:var(--red);font-weight:600;white-space:pre-line}
+#boot-retry{display:none;margin-top:2px;border:0;cursor:pointer;background:var(--hana-deep);color:#fff;
+  font:inherit;font-size:12.5px;font-weight:700;padding:11px 20px;border-radius:10px}
+#boot-retry.on{display:block}
+/* ── 잠금 화면 (첫 접속 · 비밀번호) ── */
+#lock{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:22px;
+  background:linear-gradient(158deg,#00453A 0%,#006A57 58%,#0E9E86 100%)}
+#lock[hidden]{display:none}
+.lockbox{width:100%;max-width:326px;background:#fff;border-radius:18px;padding:22px 20px 16px;text-align:center;
+  box-shadow:0 18px 44px rgba(0,0,0,.28)}
+.lockbox .lk-ico{width:46px;height:46px;margin:0 auto 10px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(145deg,#14AB8D,#00796A);color:#fff;font-size:20px;box-shadow:0 6px 14px rgba(0,121,106,.28)}
+.lockbox h2{margin:0 0 4px;font-size:16px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.lockbox p{margin:0 0 13px;font-size:11px;line-height:1.55;color:var(--sub)}
+.lockbox input{width:100%;height:44px;border:1px solid #D8E5E0;border-radius:11px;background:#FBFDFC;
+  font:inherit;font-size:16px;letter-spacing:.12em;text-align:center;color:var(--ink);padding:0 12px}
+.lockbox input:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.12)}
+.lockbox button{width:100%;height:45px;margin-top:9px;border:0;border-radius:11px;cursor:pointer;
+  background:var(--hana-deep);color:#fff;font:inherit;font-size:13px;font-weight:700}
+.lockbox button:active{background:#003D33}
+.lockbox button:disabled{opacity:.62}
+.lock-err{min-height:15px;margin-top:9px;font-size:10.5px;line-height:1.45;color:var(--red);font-weight:600;white-space:pre-line}
+#lock-btn{margin-top:7px;border:0;background:transparent;color:#8A9C95;font:inherit;font-size:9.5px;line-height:1.4;
+  text-decoration:underline;cursor:pointer;padding:4px 6px}
+</style>
+</head>
+<body>
+
+<div id="lock" hidden>
+  <div class="lockbox">
+    <div class="lk-ico">🔒</div>
+    <h2>방문관리 체크표</h2>
+    <p>비밀번호를 입력해 주세요.<br>한 번 입력하면 이 기기에서는 자동으로 열립니다.</p>
+    <input id="lock-pass" type="password" autocomplete="off" autocapitalize="off" spellcheck="false"
+           enterkeyhint="go" placeholder="비밀번호" aria-label="비밀번호">
+    <button id="lock-go" type="button">들어가기</button>
+    <div class="lock-err" id="lock-err"></div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="brand"><b>하나은행</b><i></i><span>죽전점 SR</span><span class="badge" id="badge">2026.12</span></div>
+  <h1>방문관리 체크표</h1>
+  <p class="hero-sub">월 1회 순회 121곳 + 개별 일정 · 체크하면 시트에 바로 저장</p>
+</header>
+
+<section class="summary" aria-label="진행 현황">
+  <div class="nums">
+    <div class="num"><b id="sum-total">–</b><span id="sum-scope">전체</span></div>
+    <div class="num done"><b id="sum-done">–</b><span>완료</span></div>
+    <div class="num left"><b id="sum-left">–</b><span>미방문</span></div>
+    <div class="pct"><b id="sum-pct">–</b><span>달성률</span></div>
+  </div>
+  <div class="bar"><i id="bar-fill"></i></div>
+  <div class="sumnote">
+    <span id="sum-reg">정기 121곳</span>
+    <span id="sum-ind">개별 일정</span>
+  </div>
+</section>
+
+<div class="topbar">
+  <div class="vrow">
+    <div class="viewtog" id="viewtog" role="group" aria-label="보기 전환">
+      <button class="vt on" type="button" data-view="list">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>목록</button>
+      <button class="vt" type="button" data-view="map">
+        <svg viewBox="0 0 24 24"><path d="M12 21s6.5-6 6.5-10.7A6.5 6.5 0 0 0 5.5 10.3C5.5 15 12 21 12 21z"/><circle cx="12" cy="10.2" r="2.2"/></svg>지도</button>
+    </div>
+    <span class="vhint" id="vhint"></span>
+  </div>
+  <nav class="tabs" id="tabs" aria-label="주차 필터"></nav>
+  <div class="search" id="searchrow">
+    <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 20 20"/></svg>
+    <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off"
+           placeholder="중개사명·권역·소재지 검색" aria-label="중개사 검색">
+    <button id="q-clear" type="button" aria-label="검색어 지우기">✕</button>
+  </div>
+  <div class="sresult" id="sresult" hidden></div>
+</div>
+
+<main id="list" aria-live="polite"></main>
+<div class="empty" id="empty" hidden></div>
+
+<section id="mapview" hidden>
+  <div id="map"></div>
+  <div class="maplegend" id="maplegend">
+    <span><i style="background:#E07C1D"></i>미방문</span>
+    <span><i style="background:#0B9075"></i>방문완료</span>
+    <span><i style="background:#C0392B"></i>선택</span>
+  </div>
+  <div class="mapnote" id="mapnote"></div>
+</section>
+
+<p class="foot"><span id="foot">정기방문_체크표 · 개별_영업일정 시트와 실시간 연동</span><br>
+  <button id="lock-btn" type="button" aria-label="잠금 화면으로 돌아가기">🔒 잠금 (비밀번호 다시 입력)</button></p>
+
+<div class="mapcard" id="mapcard" hidden>
+  <div class="mc">
+    <div class="mc-top">
+      <span class="mc-no" id="mc-no">1</span>
+      <div class="mc-info">
+        <h3 id="mc-name">중개사명</h3>
+        <p id="mc-sub">주소</p>
+      </div>
+      <button class="mc-x" id="mc-x" type="button" aria-label="카드 닫기">✕</button>
+    </div>
+    <div class="mc-acts">
+      <a class="btn tel" id="mc-tel" href="#" aria-label="전화 걸기">전화걸기</a>
+      <button class="btn done" id="mc-done" type="button">완료 체크</button>
+      <a class="btn map" id="mc-route" href="#" target="_blank" rel="noopener">길찾기</a>
+    </div>
+  </div>
+</div>
+
+<div class="savebar">
+  <span class="st"><i class="dot" id="dot"></i><span id="save-state">시트 연결 중…</span></span>
+  <button id="reload" type="button">
+    <svg viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 1 0-2.3 5.6"/><path d="M20 4.5v7h-7"/></svg>
+    새로고침
+  </button>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="boot" id="boot" hidden>
+  <div class="spin" id="boot-spin"></div>
+  <div id="boot-msg">시트에서 불러오는 중…</div>
+  <button id="boot-retry" type="button">다시 시도</button>
+</div>
+
+<script>
+/* ───────────── 카카오맵 JavaScript SDK 키 ─────────────
+   아래 한 곳만 바꾸면 됩니다. (developers.kakao.com → 내 애플리케이션
+   → 앱 키 → JavaScript 키). 카카오 개발자 콘솔의 [플랫폼 → Web]에
+   이 웹앱 주소(https://p71021jw.github.io)를 등록해야 지도가 뜹니다.
+   키를 그대로 두면 지도 대신 안내 문구가 나오고 목록·체크는 정상 동작합니다. */
+var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
+/* ──────────────────────────────────────────────────── */
+
+(function () {
+  'use strict';
+
+  /* ── 상수 ─────────────────────────────────────────── */
+  var TABS = [
+    { k: '전체', label: '전체' },
+    { k: '1주차', label: '1주차' },
+    { k: '2주차', label: '2주차' },
+    { k: '3주차', label: '3주차' },
+    { k: '4주차', label: '4주차' },
+    { k: '개별', label: '개별' }
+  ];
+  var MEMO_DELAY = 700;      // 메모 자동 저장 지연(ms)
+  var ICON_PHONE = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6.4 3.6h3.1l1.5 4.1-2 1.4a12.2 12.2 0 0 0 5.9 5.9l1.4-2 4.1 1.5v3.1a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.4 5.8a2 2 0 0 1 2-2.2z"/></svg>';
+  var ICON_PIN = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 21.2s6.6-6.1 6.6-10.7a6.6 6.6 0 0 0-13.2 0C5.4 15.1 12 21.2 12 21.2z"/><circle cx="12" cy="10.3" r="2.3" fill="currentColor" stroke="none"/></svg>';
+
+  /* ── 상태 ─────────────────────────────────────────── */
+  /* 주소 끝 ?week=1~4 로 들어오면 그 주차 탭을 바로 연다. (?view=map 이면 지도부터) */
+  function weekTabFromUrl() {
+    var m = /[?&]week=([1-4])(?:&|$)/.exec(location.search || '');
+    return m ? (m[1] + '주차') : '전체';
+  }
+  function viewFromUrl() {
+    return /[?&]view=map(?:&|$)/.test(location.search || '') ? 'map' : 'list';
+  }
+
+  var S = {
+    tab: weekTabFromUrl(),
+    view: viewFromUrl(),
+    q: '',
+    ready: false,
+    loading: true,
+    reg: [],
+    ind: [],
+    byKey: {},
+    seqByKey: {},
+    fetchedAt: '',
+    summary: null
+  };
+  var memoTimers = {};
+  var pendingWrites = 0;
+  var toastTimer = null;
+
+  /* 지도 상태 */
+  var M = {
+    loading: false,
+    ready: false,
+    failed: '',
+    map: null,
+    overlays: [],
+    selKey: '',
+    center: null
+  };
+
+  /* ── 작은 도우미 ──────────────────────────────────── */
+  function $(id) { return document.getElementById(id); }
+
+  function esc(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (ch) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+    });
+  }
+
+  function firstLine(s) { return String(s || '').split('\n')[0]; }
+
+  function keyOf(it) { return (it.type === 'regular' ? 'r' : 'i') + it.row; }
+
+  function hhmm() {
+    var d = new Date();
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
+  }
+
+  /** '2026-11-26(목)' → '11/26(목)' */
+  function shortDate(s) {
+    var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})(.*)$/);
+    return m ? (m[2] + '/' + m[3] + m[4]).trim() : String(s || '');
+  }
+
+  /** 연락처 글자에서 실제 전화번호만 뽑는다(휴대폰 우선). */
+  function telOf(raw) {
+    var s = String(raw || '');
+    var m = s.match(/01[016789][-.\s]?\d{3,4}[-.\s]?\d{4}/) || s.match(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/);
+    return m ? m[0].replace(/[^\d]/g, '') : '';
+  }
+
+  /** '02-000-0000 / 010-0000-0000' + 줄바꿈 + 담당자명 → {dial, display, name} */
+  function telInfo(raw) {
+    var s = String(raw || '');
+    var lines = s.split('\n');
+    var name = lines.length > 1 ? lines[1].trim() : '';
+    var dial = telOf(s);
+    return { dial: dial, display: fmtPhone(dial), name: dial ? name : '' };
+  }
+
+  function fmtPhone(d) {
+    if (d.length === 11) return d.substr(0, 3) + '-' + d.substr(3, 4) + '-' + d.substr(7);
+    if (d.length === 10) return d.substr(0, 3) + '-' + d.substr(3, 3) + '-' + d.substr(6);
+    return d;
+  }
+
+  /** 지도 검색어 — 소재지/장소에서 쓸 만한 구절을 고른다. */
+  function mapQuery(addr, name) {
+    var src = String(addr || '').replace(/\n/g, ' ');
+    var pool = [];
+    var par = src.match(/\(([^)]*)\)/g) || [];
+    for (var i = 0; i < par.length; i++) pool.push(par[i].replace(/[()]/g, ''));
+    pool.push(src.replace(/\([^)]*\)/g, ' '));
+    var place = '';
+    for (var j = 0; j < pool.length; j++) {
+      var seg = String(pool[j]).split(/[·,]/)[0].trim();
+      if (seg && seg.indexOf('미확인') < 0 && /(동|읍|면|로|길|구)/.test(seg)) { place = seg; break; }
+    }
+    if (!place) return String(name || '');
+    if (!/^대구/.test(place) && /^(달서구|중구|남구|서구|동구|북구|수성구|달성군)/.test(place)) place = '대구 ' + place;
+    return (place + ' ' + (name || '')).trim();
+  }
+
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2400);
+  }
+
+  /* ── 상태 표시줄 ──────────────────────────────────── */
+  function setStatus(kind, text) {
+    var el = $('save-state'), dot = $('dot');
+    var cls = 'dot', msg = text || '';
+    if (kind === 'busy') { cls += ' busy'; msg = text || '저장 중…'; }
+    else if (kind === 'editing') { cls += ' busy'; msg = text || '입력 중…'; }
+    else if (kind === 'saved') { cls += ' ok'; msg = '시트에 저장됨 · ' + (text || hhmm()); }
+    else if (kind === 'failed') { cls += ' bad'; msg = text || '저장 실패 · 다시 시도'; }
+    else if (kind === 'offline') { cls += ' bad'; msg = text || '시트 연결이 끊겼습니다'; }
+    else if (kind === 'ready') { cls += ' ok'; msg = '시트와 연결됨' + (S.fetchedAt ? ' · ' + S.fetchedAt.substr(11, 5) : ''); }
+    else { msg = text || '시트 연결 중…'; }
+    dot.className = cls;
+    el.textContent = msg;
+  }
+
+  /* ── 서버 호출 (Apps Script JSON API · fetch) ─────── */
+  /*  아래 EXEC_URL 한 줄이 데이터 통로입니다. Apps Script를 다시 배포해도
+      주소(/exec)가 같으면 이 줄은 바꿀 필요가 없습니다. */
+  var EXEC_URL = 'https://script.google.com/macros/s/AKfycbzj90UK9FQcWo6gFQnEKwqzf8GI6raCeo_G9uBcowiOK3YpvSKWqW25iZ5OYPA2qTKhFw/exec';
+  var PASS_KEY = 'visit_check_pass';
+  var PASS = '';
+  try { PASS = localStorage.getItem(PASS_KEY) || ''; } catch (e) { PASS = ''; }
+
+  function savePass(v) {
+    PASS = String(v === null || v === undefined ? '' : v);
+    try {
+      if (PASS) localStorage.setItem(PASS_KEY, PASS);
+      else localStorage.removeItem(PASS_KEY);
+    } catch (e) {}
+  }
+
+  function readJSON(text) {
+    try { return JSON.parse(text); } catch (e) { return null; }
+  }
+
+  /* 조회: GET  ${EXEC_URL}?api=1&action=board&pass=… */
+  function apiGet(action) {
+    var url = EXEC_URL + '?api=1&action=' + encodeURIComponent(action) +
+              '&pass=' + encodeURIComponent(PASS) + '&t=' + Date.now();
+    return fetch(url, { method: 'GET', cache: 'no-store', redirect: 'follow' })
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        var res = readJSON(text);
+        if (!res) throw new Error('서버 응답을 읽지 못했습니다(API 배포 확인 필요)');
+        return res;
+      });
+  }
+
+  /* 저장: POST  Content-Type: text/plain — Apps Script CORS preflight 회피용 */
+  function apiPost(payload) {
+    payload.pass = PASS;
+    return fetch(EXEC_URL, {
+      method: 'POST',
+      cache: 'no-store',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (r) { return r.text(); })
+      .then(function (text) {
+        var res = readJSON(text);
+        if (!res) throw new Error('서버 응답을 읽지 못했습니다(API 배포 확인 필요)');
+        return res;
+      });
+  }
+
+  /* 화면 코드는 예전과 같은 srv('함수명', [인수…]) 모양을 그대로 쓴다. */
+  function srv(method, args, onOk, onFail) {
+    var task;
+    if (method === 'getBoardData') {
+      task = apiGet('board');
+    } else if (method === 'toggleCheck') {
+      task = apiPost({ action: 'toggle', sheetType: args[0], row: args[1], checked: args[2] });
+    } else if (method === 'saveMemo') {
+      task = apiPost({ action: 'memo', sheetType: args[0], row: args[1], memo: args[2] });
+    } else {
+      if (onFail) onFail(new Error('알 수 없는 호출입니다: ' + method));
+      return;
+    }
+    task.then(function (res) {
+      if (res && res.code === 'auth') {
+        var e = new Error(res.error || '비밀번호가 다시 필요합니다');
+        e.auth = true;
+        lockOut(res.error || '비밀번호가 다시 필요합니다');
+        if (onFail) onFail(e);
+        return;
+      }
+      if (onOk) onOk(res);
+    }, function (err) {
+      if (onFail) onFail(err);
+    });
+  }
+
+  /* ── 잠금 화면 ──────────────────────────────────── */
+  function showLock(msg) {
+    var lk = $('lock');
+    $('boot').hidden = true;
+    $('boot-retry').classList.remove('on');
+    $('lock-err').textContent = msg || '';
+    var inp = $('lock-pass');
+    inp.value = '';
+    lk.hidden = false;
+    try { inp.focus(); } catch (e) {}
+  }
+
+  /* 비밀번호를 지우고 잠금 화면으로 되돌린다 (기기에는 남기지 않는다) */
+  function lockOut(msg) {
+    savePass('');
+    S.reg = [];
+    S.ind = [];
+    S.byKey = {};
+    S.ready = false;
+    S.loading = false;
+    $('list').innerHTML = '';
+    $('empty').hidden = true;
+    $('mapcard').hidden = true;
+    document.body.classList.remove('mc-open');
+    if (M.map) { try { clearOverlays(); } catch (e) {} }
+    M.map = null;
+    M.ready = false;
+    M.failed = '';
+    M.selKey = '';
+    setStatus('plain', '잠김');
+    showLock(msg || '');
+  }
+
+  function tryUnlock() {
+    var v = $('lock-pass').value;
+    if (!v) { $('lock-err').textContent = '비밀번호를 입력해 주세요'; return; }
+    $('lock-err').textContent = '';
+    var btn = $('lock-go');
+    btn.disabled = true;
+    btn.textContent = '확인 중…';
+    savePass(v);
+    fetchBoard(function (ok) {
+      btn.disabled = false;
+      btn.textContent = '들어가기';
+      if (ok) $('lock').hidden = true;
+    });
+  }
+
+  /* ── 집계 ─────────────────────────────────────────── */
+  function scopeItems() {
+    if (S.tab === '개별') return S.ind;
+    if (S.tab === '전체') return S.reg.concat(S.ind);
+    return S.reg.filter(function (it) { return it.week === S.tab; });
+  }
+
+  function pctOf(done, total) { return total ? Math.round(done / total * 100) : 0; }
+
+  function updateSummary() {
+    var rows = scopeItems();
+    var done = 0;
+    for (var i = 0; i < rows.length; i++) if (rows[i].checked) done++;
+    var pct = pctOf(done, rows.length);
+    $('sum-total').textContent = rows.length;
+    $('sum-done').textContent = done;
+    $('sum-left').textContent = rows.length - done;
+    $('sum-pct').textContent = pct + '%';
+    $('sum-scope').textContent = S.tab === '개별' ? '개별 일정' : S.tab;
+    $('bar-fill').style.width = pct + '%';
+
+    var rd = 0, idone = 0;
+    S.reg.forEach(function (it) { if (it.checked) rd++; });
+    S.ind.forEach(function (it) { if (it.checked) idone++; });
+    $('sum-reg').innerHTML = '정기 <b>' + S.reg.length + '곳</b> · 완료 <b>' + rd + '</b> (' + pctOf(rd, S.reg.length) + '%)';
+    $('sum-ind').innerHTML = '개별 <b>' + S.ind.length + '건</b> · 완료 <b>' + idone + '</b>';
+
+    /* 탭 바로 아래 한 줄 — 지금 보고 있는 범위의 건수와 완료 수 */
+    var sdone = 0;
+    for (var k = 0; k < rows.length; k++) if (rows[k].checked) sdone++;
+    var scopeName = S.tab === '개별' ? '개별 일정' : S.tab;
+    var unit = S.tab === '개별' ? '건' : '곳';
+    var sr = $('sresult');
+    sr.hidden = false;
+    sr.innerHTML = S.q
+      ? '<span>‘' + esc(S.q) + '’ 검색 <b>' + visibleItems().length + '</b>건</span><span>' + esc(scopeName) + ' 안에서</span>'
+      : '<span>' + esc(scopeName) + ' <b>' + rows.length + '</b>' + unit + '</span>' +
+        '<span>완료 <b>' + sdone + '</b> · 미완료 <b>' + (rows.length - sdone) + '</b></span>';
+
+    /* 지도 힌트 */
+    var hint = $('vhint');
+    if (S.view === 'map') {
+      var pinned = mappableItems().length;
+      hint.textContent = S.tab === '개별' ? '개별 일정은 지도 좌표가 없습니다' : (pinned + '곳 번호 핀');
+    } else {
+      hint.textContent = '';
+    }
+  }
+
+  /* ── 탭 ───────────────────────────────────────────── */
+  function renderTabs() {
+    var html = '';
+    for (var i = 0; i < TABS.length; i++) {
+      var t = TABS[i];
+      html += '<button class="tab' + (S.tab === t.k ? ' on' : '') + '" type="button" data-tab="' + esc(t.k) + '">' +
+        esc(t.label) + '</button>';
+    }
+    $('tabs').innerHTML = html;
+  }
+
+  /* ── 필터 ─────────────────────────────────────────── */
+  function matchesQuery(it) {
+    if (!S.q) return true;
+    var hay;
+    if (it.type === 'regular') {
+      hay = [it.name, it.week, it.course, it.grade, it.addr, it.note, it.memo, it.tel].join(' ');
+    } else {
+      hay = [it.client, it.date, it.time, it.kind, it.item, it.contact, it.memo].join(' ');
+    }
+    return hay.toLowerCase().indexOf(S.q) >= 0;
+  }
+
+  function visibleItems() {
+    return scopeItems().filter(matchesQuery);
+  }
+
+  /* 지도에 찍을 수 있는 항목 (좌표가 있는 정기방문만) */
+  function mappableItems() {
+    return scopeItems().filter(function (it) { return it.type === 'regular' && it.lat && it.lng; });
+  }
+
+  /** 주차 안에서의 동선 순번 (시트 행 순서 = 방문 순서) */
+  function seqOf(it) {
+    return S.seqByKey[keyOf(it)] || '';
+  }
+
+  function buildSeq() {
+    S.seqByKey = {};
+    var weeks = {};
+    S.reg.forEach(function (it) {
+      var w = it.week || '';
+      if (!weeks[w]) weeks[w] = [];
+      weeks[w].push(it);
+    });
+    Object.keys(weeks).forEach(function (w) {
+      weeks[w].sort(function (a, b) { return Number(a.no || 0) - Number(b.no || 0); });
+      weeks[w].forEach(function (it, i) { S.seqByKey[keyOf(it)] = String(i + 1); });
+    });
+  }
+
+  /* ── 카드 ─────────────────────────────────────────── */
+  function cardHTML(it) {
+    var key = keyOf(it);
+    var on = !!it.checked;
+    var memoVal = (it.draft !== undefined) ? it.draft : it.memo;
+    var head, metas = [], tel, mapLabel, mapQ, memoPh;
+
+    if (it.type === 'regular') {
+      var seq = seqOf(it);
+      head = (seq ? '<span class="seq">' + esc(seq) + '</span>' : '') + esc(it.name) +
+        (it.grade ? '<span class="chip">' + esc(it.grade) + '</span>' : '');
+      var line1 = [it.week, it.course].filter(Boolean).join(' · ');
+      if (line1) metas.push('<span class="wk">' + esc(line1) + '</span>');
+      if (it.addr && it.addr.indexOf('미확인') < 0) metas.push('<span>' + esc(it.addr) + '</span>');
+      var info = telInfo(it.tel);
+      if (info.display) {
+        metas.push('<span class="tel-no">' + esc(info.display) + (info.name ? ' · ' + esc(info.name) : '') + '</span>');
+      }
+      if (it.note) metas.push('<span class="note">' + esc(it.note) + '</span>');
+      tel = info.dial;
+      mapQ = mapQuery(it.addr, it.name);
+      mapLabel = '지도';
+      memoPh = '상담·방문 메모 (자동 저장)';
+    } else {
+      head = esc(it.client || '(거래처 미입력)') + (it.date ? '<span class="chip date">' + esc(shortDate(it.date)) + '</span>' : '');
+      var line2 = [it.time, it.kind].filter(Boolean).join(' · ') || '개별 일정';
+      metas.push('<span class="wk">' + esc(line2) + '</span>');
+      if (it.item) metas.push('<span>' + esc(it.item) + '</span>');
+      if (it.contact) metas.push('<span>' + esc(it.contact) + '</span>');
+      tel = telOf(it.contact);
+      mapQ = mapQuery(it.contact, it.client);
+      mapLabel = '지도';
+      memoPh = '결과·메모 (자동 저장)';
+    }
+
+    var telBtn = tel
+      ? '<a class="btn tel" href="tel:' + tel + '" aria-label="' + esc(it.name || it.client) + ' 전화 걸기">' + ICON_PHONE + '전화</a>'
+      : (it.type === 'regular'
+          ? '<span class="btn tel off">' + ICON_PHONE + '번호 미확인</span>'
+          : '');
+
+    var vdate = (it.type === 'regular' && it.date)
+      ? '<span class="vdate">방문 ' + esc(it.date) + '</span>' : '';
+
+    return '<article class="card' + (on ? ' done' : '') + '" data-key="' + key + '" data-type="' + it.type +
+      '" data-row="' + it.row + '">' +
+      '<div class="card-top" data-act="toggle">' +
+        '<button class="check" type="button" role="checkbox" aria-checked="' + on + '" aria-label="' +
+          esc((it.name || it.client || '') + ' 완료 체크') + '">' +
+          '<svg viewBox="0 0 24 24"><path d="M4.5 12.6l5 5L19.5 7.2"/></svg></button>' +
+        '<div class="info">' +
+          '<h2 class="name">' + head + '</h2>' +
+          '<p class="meta">' + metas.join('') + '</p>' +
+          vdate +
+        '</div>' +
+      '</div>' +
+      '<div class="acts">' + telBtn +
+        '<a class="btn map" href="https://map.kakao.com/link/search/' + encodeURIComponent(mapQ) +
+          '" target="_blank" rel="noopener" aria-label="' + esc(it.name || it.client) + ' 지도 보기">' + ICON_PIN + mapLabel + '</a>' +
+      '</div>' +
+      '<input class="memo" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" placeholder="' + memoPh +
+        '" aria-label="' + esc((it.name || it.client || '') + ' 메모') + '" value="' + esc(memoVal) + '">' +
+    '</article>';
+  }
+
+  /* ── 렌더 ─────────────────────────────────────────── */
+  function render() {
+    renderTabs();
+    $('list').hidden = (S.view === 'map');
+    $('mapview').hidden = (S.view !== 'map');
+    $('searchrow').hidden = (S.view === 'map');
+    if (S.view === 'map') $('sresult').hidden = true;
+
+    if (S.view === 'list') {
+      var rows = visibleItems();
+      var html = '';
+      if (S.tab === '전체' && !S.q) {
+        var regs = S.reg.filter(matchesQuery);
+        var inds = S.ind.filter(matchesQuery);
+        html += '<div class="sec">정기방문 ' + regs.length + '곳</div>';
+        html += regs.map(cardHTML).join('');
+        if (inds.length) {
+          html += '<div class="sec">개별 영업일정 ' + inds.length + '건</div>';
+          html += inds.map(cardHTML).join('');
+        }
+      } else {
+        html = rows.map(cardHTML).join('');
+      }
+      $('list').innerHTML = html;
+
+      var emptyEl = $('empty');
+      if (rows.length) {
+        emptyEl.hidden = true;
+      } else {
+        emptyEl.hidden = false;
+        emptyEl.textContent = S.q ? ('‘' + S.q + '’ 검색 결과가 없습니다') : '표시할 항목이 없습니다';
+      }
+    } else {
+      $('empty').hidden = true;
+      renderMap();
+    }
+
+    updateSummary();
+  }
+
+  /* ── 카카오맵 ─────────────────────────────────────── */
+  function loadKakao(cb) {
+    if (window.kakao && window.kakao.maps) { cb(''); return; }
+    if (!KAKAO_JS_KEY || KAKAO_JS_KEY.indexOf('YOUR_') === 0) { cb('nokey'); return; }
+    var s = document.createElement('script');
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey=' + encodeURIComponent(KAKAO_JS_KEY) +
+            '&autoload=false&libraries=services';
+    s.onload = function () {
+      if (!window.kakao || !window.kakao.maps) { cb('sdk'); return; }
+      try {
+        window.kakao.maps.load(function () { cb(''); });
+      } catch (e) { cb('sdk'); }
+    };
+    s.onerror = function () { cb('sdk'); };
+    document.head.appendChild(s);
+  }
+
+  function mapNote(msg) {
+    var n = $('mapnote');
+    if (!msg) { n.innerHTML = '<b>핀 번호가 방문 순서</b>입니다. 핀을 누르면 아래 카드에서 전화·완료 체크·길찾기를 할 수 있습니다.'; return; }
+    if (msg === 'nokey') {
+      n.innerHTML = '지도 키가 아직 없습니다. <b>index.html</b> 맨 위 <b>KAKAO_JS_KEY</b> 한 곳에 카카오 JavaScript 키를 넣고 다시 배포하면 지도가 뜹니다. (지금도 목록·체크·메모는 정상 동작합니다)';
+    } else if (msg === 'sdk') {
+      var org = location.origin || '';
+      n.innerHTML = '카카오맵을 불러오지 못했습니다. 카카오 <b>[플랫폼 키 → JavaScript SDK 도메인]</b>에 아래 주소를 추가하고 저장해 주세요:<br><code style="display:inline-block;margin:5px 6px 0 0;padding:4px 7px;background:#fff;border:1px solid #CDE0D9;border-radius:6px;font-size:10px;word-break:break-all">' + esc(org) + '</code><button type="button" onclick="navigator.clipboard&&navigator.clipboard.writeText(\'' + esc(org) + '\');this.textContent=\'복사됨!\'" style="padding:4px 9px;border:0;border-radius:6px;background:#004E41;color:#fff;font-size:10px;font-weight:700;cursor:pointer">주소 복사</button>';
+    } else if (msg === 'none') {
+      n.innerHTML = '이 범위에는 지도에 표시할 좌표가 없습니다. <b>위치</b>가 비어 있는 곳은 시트 M·N열(위도·경도)을 채우면 핀이 생깁니다.';
+    } else {
+      n.innerHTML = esc(msg);
+    }
+  }
+
+  function clearOverlays() {
+    for (var i = 0; i < M.overlays.length; i++) {
+      try { M.overlays[i].setMap(null); } catch (e) {}
+    }
+    M.overlays = [];
+  }
+
+  function renderMap() {
+    $('mapcard').hidden = !M.selKey;
+    if (!M.selKey) document.body.classList.remove('mc-open');
+    var items = mappableItems();
+    if (S.tab === '개별') {
+      mapNote('개별 일정은 지도 좌표가 없습니다. 목록 탭에서 보세요.');
+      clearOverlays();
+      return;
+    }
+    if (!M.ready) {
+      if (M.failed) { mapNote(M.failed); return; }
+      if (!M.loading) initMap();
+      return;
+    }
+    mapNote('');
+    var kakao = window.kakao;
+    var map = M.map;
+    clearOverlays();
+    var bounds = new kakao.maps.LatLngBounds();
+    var selOverlay = null;
+
+    var seen = {};
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var ck = Number(it.lat).toFixed(5) + ',' + Number(it.lng).toFixed(5);
+      var idx = seen[ck] || 0;
+      seen[ck] = idx + 1;
+      var lat = Number(it.lat), lng = Number(it.lng);
+      if (idx > 0) {
+        var ang = (idx - 1) * (Math.PI * 2 / 6);
+        var r = 0.00018 * (1 + Math.floor((idx - 1) / 6));
+        lat += Math.sin(ang) * r;
+        lng += Math.cos(ang) * r * 1.2;
+      }
+      var pos = new kakao.maps.LatLng(lat, lng);
+      bounds.extend(pos);
+      var seq = seqOf(it);
+      var el = document.createElement('div');
+      el.className = 'pin' + (it.checked ? ' done' : '') + (keyOf(it) === M.selKey ? ' sel' : '');
+      el.innerHTML = '<span>' + esc(seq || '·') + '</span>';
+      el.setAttribute('role', 'button');
+      el.setAttribute('aria-label', seq + '번 ' + it.name);
+      el.attachEvent ? el.attachEvent('onclick', mkClick(it)) : el.addEventListener('click', mkClick(it));
+      var ov = new kakao.maps.CustomOverlay({
+        position: pos,
+        content: el,
+        xAnchor: 0.5,
+        yAnchor: 1,
+        clickable: true,
+        zIndex: 3
+      });
+      ov.setMap(map);
+      M.overlays.push(ov);
+      if (keyOf(it) === M.selKey) selOverlay = ov;
+    }
+
+    if (!items.length) { mapNote('none'); return; }
+    if (M.selKey && selOverlay) {
+      var sel = S.byKey[M.selKey];
+      if (sel) {
+        map.panTo(new kakao.maps.LatLng(sel.lat, sel.lng));
+        map.setLevel(Math.min(map.getLevel(), 4));
+      }
+    } else if (items.length === 1) {
+      map.setCenter(bounds.getSouthWest ? new kakao.maps.LatLng(items[0].lat, items[0].lng) : null);
+      map.setLevel(4);
+    } else {
+      map.setBounds(bounds, 24, 24, 24, 24);
+    }
+  }
+
+  function mkClick(it) {
+    return function (ev) {
+      if (ev && ev.stopPropagation) ev.stopPropagation();
+      selectItem(it);
+    };
+  }
+
+  function selectItem(it) {
+    M.selKey = keyOf(it);
+    showMapCard(it);
+    /* 핀 색만 갱신 (지도 재생성 없이) */
+    var cards = document.querySelectorAll('#map .pin');
+    if (cards && M.overlays.length) {
+      renderMapPinsOnly();
+    }
+  }
+
+  function renderMapPinsOnly() {
+    var items = mappableItems();
+    var kakao = window.kakao;
+    if (!kakao) return;
+    for (var i = 0; i < M.overlays.length && i < items.length; i++) {
+      var it = items[i];
+      var el = M.overlays[i].getContent();
+      if (!el) continue;
+      var cls = 'pin' + (it.checked ? ' done' : '') + (keyOf(it) === M.selKey ? ' sel' : '');
+      if (el.className !== cls) el.className = cls;
+    }
+  }
+
+  function showMapCard(it) {
+    var card = $('mapcard');
+    card.hidden = false;
+    document.body.classList.add('mc-open');
+    $('mc-no').textContent = seqOf(it) || it.no || '';
+    $('mc-name').textContent = it.name || '';
+    var sub = [];
+    if (it.course) sub.push(it.course);
+    if (it.addr && it.addr.indexOf('미확인') < 0) sub.push(it.addr);
+    else if (it.addr) sub.push('소재지 미확인');
+    $('mc-sub').textContent = sub.join(' · ');
+
+    var info = telInfo(it.tel);
+    var telA = $('mc-tel');
+    if (info.dial) {
+      telA.href = 'tel:' + info.dial;
+      telA.className = 'btn tel';
+      telA.innerHTML = ICON_PHONE + '전화걸기';
+      telA.style.display = '';
+    } else {
+      telA.href = '#';
+      telA.className = 'btn tel off';
+      telA.textContent = '번호 미확인';
+      telA.style.display = '';
+    }
+
+    var doneBtn = $('mc-done');
+    doneBtn.textContent = it.checked ? '완료됨 ✓' : '완료 체크';
+    doneBtn.className = 'btn done' + (it.checked ? ' on' : '');
+    doneBtn.disabled = false;
+
+    $('mc-route').href = 'https://map.kakao.com/link/to/' + encodeURIComponent(it.name) + ',' + it.lat + ',' + it.lng;
+  }
+
+  function initMap() {
+    if (M.ready || M.loading) return;
+    M.loading = true;
+    mapNote('');
+    loadKakao(function (err) {
+      M.loading = false;
+      if (err) { M.failed = err; mapNote(err); return; }
+      var kakao = window.kakao;
+      var items = mappableItems();
+      var center = new kakao.maps.LatLng(35.8485, 128.5385);   // 죽전네거리 기준
+      if (M.center) center = M.center;
+      else if (items.length) center = new kakao.maps.LatLng(items[0].lat, items[0].lng);
+      M.map = new kakao.maps.Map($('map'), { center: center, level: 7 });
+      M.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+      M.ready = true;
+      M.failed = '';
+      renderMap();
+    });
+  }
+
+  /* ── 체크 ─────────────────────────────────────────── */
+  var inFlight = {};
+
+  function applyCard(card, it) {
+    card.classList.toggle('done', !!it.checked);
+    var btn = card.querySelector('.check');
+    if (btn) btn.setAttribute('aria-checked', String(!!it.checked));
+    if (it.type === 'regular') {
+      var holder = card.querySelector('.info');
+      if (holder) {
+        var old = holder.querySelector('.vdate');
+        if (it.date) {
+          if (old) { old.textContent = '방문 ' + it.date; }
+          else {
+            var el = document.createElement('span');
+            el.className = 'vdate';
+            el.textContent = '방문 ' + it.date;
+            holder.appendChild(el);
+          }
+        } else if (old) {
+          old.parentNode.removeChild(old);
+        }
+      }
+    }
+  }
+
+  function onToggle(card) {
+    var key = card.dataset.key;
+    var it = S.byKey[key];
+    if (!it || inFlight[key]) return;
+
+    var next = !it.checked;
+    var before = it.checked;
+
+    /* 낙관적 반영 */
+    it.checked = next;
+    applyCard(card, it);
+    updateSummary();
+    card.classList.add('pending');
+    setStatus('busy');
+    inFlight[key] = true;
+
+    srv('toggleCheck', [it.type, it.row, next], function (res) {
+      inFlight[key] = false;
+      card.classList.remove('pending');
+      if (!res || res.ok !== true) { rollback(); return; }
+      it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
+      if (res.visitDate) it.date = res.visitDate;
+      applyCard(card, it);
+      updateSummary();
+      syncMapItem(it);
+      setStatus('saved', res.savedAt || '');
+      if (window.navigator.vibrate) { try { navigator.vibrate(it.checked ? 18 : 10); } catch (e) {} }
+    }, function () {
+      inFlight[key] = false;
+      card.classList.remove('pending');
+      rollback();
+    });
+
+    function rollback() {
+      it.checked = before;
+      applyCard(card, it);
+      updateSummary();
+      syncMapItem(it);
+      setStatus('failed');
+      toast('체크를 저장하지 못했습니다 · 시트 연결을 확인해 주세요');
+    }
+  }
+
+  /** 지도 핀·하단 카드를 현재 상태에 맞춘다 */
+  function syncMapItem(it) {
+    if (S.view === 'map' && M.ready) renderMapPinsOnly();
+    if (M.selKey === keyOf(it) && !$('mapcard').hidden) showMapCard(it);
+  }
+
+  /* ── 메모 ─────────────────────────────────────────── */
+  function queueMemo(card, it) {
+    var key = card.dataset.key;
+    setStatus('editing');
+    clearTimeout(memoTimers[key]);
+    memoTimers[key] = setTimeout(function () { flushMemo(card, it); }, MEMO_DELAY);
+  }
+
+  function flushMemo(card, it) {
+    var key = card.dataset.key;
+    clearTimeout(memoTimers[key]);
+    memoTimers[key] = null;
+    if (it.draft === undefined) return;
+    var val = it.draft;
+    if (val === it.memo) { if (pendingWrites === 0) setStatus('saved'); return; }
+
+    pendingWrites++;
+    setStatus('busy');
+    srv('saveMemo', [it.type, it.row, val], function (res) {
+      pendingWrites--;
+      if (!res || res.ok !== true) { revert(); return; }
+      it.memo = val;
+      if (pendingWrites === 0) setStatus('saved', res.savedAt ? res.savedAt.substr(11, 5) : '');
+    }, function () {
+      pendingWrites--;
+      revert();
+    });
+
+    function revert() {
+      it.draft = it.memo;
+      var input = card.querySelector('.memo');
+      if (input) input.value = it.memo;
+      setStatus('failed');
+      toast('메모를 저장하지 못했습니다 · 다시 입력해 주세요');
+    }
+  }
+
+  function flushAll() {
+    var cards = $('list').querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) {
+      var it = S.byKey[cards[i].dataset.key];
+      if (it && it.draft !== undefined && memoTimers[cards[i].dataset.key]) flushMemo(cards[i], it);
+    }
+  }
+
+  /* ── 데이터 불러오기 ──────────────────────────────── */
+  function normalize(it) {
+    it.draft = undefined;
+    if (typeof it.checked !== 'boolean') it.checked = (it.checked === true);
+    if (!it.memo) it.memo = '';
+    if (it.lat === undefined) it.lat = null;
+    if (it.lng === undefined) it.lng = null;
+    return it;
+  }
+
+  function loadError(msg) {
+    S.loading = false;
+    $('boot').hidden = false;
+    $('boot-spin').style.display = 'none';
+    $('boot-msg').className = 'err';
+    $('boot-msg').textContent = '시트를 불러오지 못했습니다' + (msg ? '\n' + msg : '');
+    $('boot-retry').classList.add('on');
+    setStatus('offline');
+  }
+
+  function fetchBoard(done) {
+    var locked = $('lock') && !$('lock').hidden;
+    var finish = function (ok) { if (typeof done === 'function') done(ok); };
+    S.loading = true;
+    if (!locked) {
+      $('boot').hidden = false;
+      $('boot-spin').style.display = '';
+      $('boot-msg').className = '';
+      $('boot-msg').textContent = '시트에서 불러오는 중…';
+      $('boot-retry').classList.remove('on');
+    }
+    setStatus('busy', '시트에서 불러오는 중…');
+
+    srv('getBoardData', [], function (res) {
+      if (!res || res.ok !== true) {
+        if (locked) { $('lock-err').textContent = (res && res.error) || '연결에 실패했습니다'; finish(false); }
+        else loadError(res && res.error);
+        return;
+      }
+      S.reg = (res.regular || []).map(normalize);
+      S.ind = (res.individual || []).map(normalize);
+      S.byKey = {};
+      S.reg.concat(S.ind).forEach(function (it) { S.byKey[keyOf(it)] = it; });
+      buildSeq();
+      S.summary = res.summary || null;
+      S.fetchedAt = res.fetchedAt || '';
+      S.loading = false;
+      S.ready = true;
+      $('boot').hidden = true;
+      $('lock').hidden = true;
+      render();
+      setStatus('ready');
+      if (res.summary) {
+        $('foot').textContent = '정기방문_체크표 ' + res.summary.regularTotal + '곳 + 개별_영업일정 ' +
+          res.summary.individualTotal + '건 · 불러온 시각 ' + S.fetchedAt.substr(11, 5);
+      }
+      /* 지도 탭으로 들어왔고 좌표가 있으면 바로 지도 준비 */
+      if (S.view === 'map' && S.tab !== '개별') initMap();
+      finish(true);
+    }, function (err) {
+      if (err && err.auth) { finish(false); return; }
+      var msg = err && err.message ? err.message : '';
+      if (locked) {
+        $('lock-err').textContent = '연결에 실패했습니다. 잠시 후 다시 시도해 주세요.' + (msg ? '\n(' + msg + ')' : '');
+        finish(false);
+      } else {
+        loadError(msg);
+      }
+    });
+  }
+
+  /* ── 이벤트 ───────────────────────────────────────── */
+  $('list').addEventListener('click', function (ev) {
+    var top = ev.target.closest('[data-act="toggle"]');
+    if (!top) return;
+    onToggle(top.closest('.card'));
+  });
+
+  $('list').addEventListener('input', function (ev) {
+    if (!ev.target.classList || !ev.target.classList.contains('memo')) return;
+    var card = ev.target.closest('.card');
+    var it = S.byKey[card.dataset.key];
+    if (!it) return;
+    it.draft = ev.target.value;
+    queueMemo(card, it);
+  });
+
+  $('list').addEventListener('focusout', function (ev) {
+    if (!ev.target.classList || !ev.target.classList.contains('memo')) return;
+    var card = ev.target.closest('.card');
+    var it = S.byKey[card.dataset.key];
+    if (it && it.draft !== undefined) flushMemo(card, it);
+  });
+
+  $('tabs').addEventListener('click', function (ev) {
+    var tab = ev.target.closest('.tab');
+    if (!tab) return;
+    flushAll();
+    S.tab = tab.dataset.tab;
+    if (S.tab === '개별' && S.view === 'map') closeMapCard();
+    render();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  $('viewtog').addEventListener('click', function (ev) {
+    var b = ev.target.closest('.vt');
+    if (!b) return;
+    var v = b.dataset.view;
+    if (v === S.view) return;
+    flushAll();
+    S.view = v;
+    Array.prototype.forEach.call(document.querySelectorAll('#viewtog .vt'), function (x) {
+      x.classList.toggle('on', x.dataset.view === v);
+    });
+    render();
+    if (v === 'map') window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  var qTimer = null;
+  $('q').addEventListener('input', function (ev) {
+    var v = ev.target.value.trim().toLowerCase();
+    $('q-clear').classList.toggle('on', !!ev.target.value);
+    clearTimeout(qTimer);
+    qTimer = setTimeout(function () { flushAll(); S.q = v; render(); }, 120);
+  });
+
+  $('q-clear').addEventListener('click', function () {
+    $('q').value = '';
+    $('q-clear').classList.remove('on');
+    flushAll();
+    S.q = '';
+    render();
+    $('q').focus();
+  });
+
+  /* 지도 하단 카드 */
+  function closeMapCard() {
+    M.selKey = '';
+    $('mapcard').hidden = true;
+    document.body.classList.remove('mc-open');
+    if (M.ready) renderMapPinsOnly();
+  }
+  $('mc-x').addEventListener('click', closeMapCard);
+
+  $('mc-done').addEventListener('click', function () {
+    var it = S.byKey[M.selKey];
+    if (!it) return;
+    var btn = $('mc-done');
+    if (btn.disabled) return;
+    var next = !it.checked;
+    var before = it.checked;
+    it.checked = next;
+    showMapCard(it);
+    renderMapPinsOnly();
+    updateSummary();
+    btn.disabled = true;
+    setStatus('busy');
+    inFlight[M.selKey] = true;
+    srv('toggleCheck', [it.type, it.row, next], function (res) {
+      inFlight[M.selKey] = false;
+      btn.disabled = false;
+      if (!res || res.ok !== true) { rollback(); return; }
+      it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
+      if (res.visitDate) it.date = res.visitDate;
+      showMapCard(it);
+      renderMapPinsOnly();
+      updateSummary();
+      setStatus('saved', res.savedAt || '');
+      if (window.navigator.vibrate) { try { navigator.vibrate(it.checked ? 18 : 10); } catch (e) {} }
+    }, function () {
+      inFlight[M.selKey] = false;
+      btn.disabled = false;
+      rollback();
+    });
+    function rollback() {
+      it.checked = before;
+      showMapCard(it);
+      renderMapPinsOnly();
+      updateSummary();
+      setStatus('failed');
+      toast('체크를 저장하지 못했습니다 · 시트 연결을 확인해 주세요');
+    }
+  });
+
+  $('reload').addEventListener('click', function () {
+    flushAll();
+    M.selKey = '';
+    $('mapcard').hidden = true;
+    if (M.map) { try { M.map = null; } catch (e) {} M.ready = false; }
+    fetchBoard();
+  });
+
+  $('boot-retry').addEventListener('click', fetchBoard);
+
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') flushAll();
+  });
+  window.addEventListener('pagehide', flushAll);
+  var resizeTimer = 0;
+  window.addEventListener('resize', function () {
+    if (M.ready && M.map) {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () {
+        try { M.map.relayout(); if (S.view === 'map') renderMap(); } catch (e) {}
+      }, 120);
+    }
+  });
+
+  /* ── 시작 ─────────────────────────────────────────── */
+  var d = new Date();
+  $('badge').textContent = d.getFullYear() + '.' + ('0' + (d.getMonth() + 1)).slice(-2);
+  Array.prototype.forEach.call(document.querySelectorAll('#viewtog .vt'), function (x) {
+    x.classList.toggle('on', x.dataset.view === S.view);
+  });
+
+  $('lock-go').addEventListener('click', tryUnlock);
+  $('lock-pass').addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter' || ev.keyCode === 13) { ev.preventDefault(); tryUnlock(); }
+  });
+  $('lock-btn').addEventListener('click', function () {
+    flushAll();
+    lockOut('비밀번호를 다시 입력해 주세요');
+  });
+
+  /* 기기에 저장된 비밀번호가 있으면 바로, 없으면 잠금 화면부터 */
+  if (PASS) fetchBoard();
+  else showLock('');
+})();
+</script>
+</body>
+</html>
