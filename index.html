@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#00453A">
 <meta name="color-scheme" content="light">
+<meta name="robots" content="noindex,nofollow">
 <title>하나은행 방문관리 체크표</title>
 <style>
 :root{
@@ -1175,6 +1176,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       var msg = err && err.message ? err.message : '';
       if (locked) {
         $('lock-err').textContent = '연결에 실패했습니다. 잠시 후 다시 시도해 주세요.' + (msg ? '\n(' + msg + ')' : '');
+        setStatus('offline');
         finish(false);
       } else {
         loadError(msg);
