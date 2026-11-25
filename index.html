@@ -1077,7 +1077,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       card.classList.remove('pending');
       if (!res || res.ok !== true) { rollback(); return; }
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
-      if (res.visitDate) it.date = res.visitDate;
+      /* 정기방문은 체크를 풀면 시트의 방문일도 지워지므로 화면의 '방문 날짜'도 바로 비운다.
+         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+      if (it.type === 'regular') it.date = res.visitDate || (it.checked ? it.date : '');
       applyCard(card, it);
       updateSummary();
       syncMapItem(it);
@@ -1314,7 +1316,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       btn.disabled = false;
       if (!res || res.ok !== true) { rollback(); return; }
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
-      if (res.visitDate) it.date = res.visitDate;
+      /* 정기방문은 체크를 풀면 시트의 방문일도 지워지므로 화면의 '방문 날짜'도 바로 비운다.
+         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+      if (it.type === 'regular') it.date = res.visitDate || (it.checked ? it.date : '');
       showMapCard(it);
       renderMapPinsOnly();
       updateSummary();
