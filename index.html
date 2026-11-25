@@ -427,21 +427,33 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     return d;
   }
 
-  /** 지도 검색어 — 소재지/장소에서 쓸 만한 구절을 고른다. */
-  function mapQuery(addr, name) {
-    var src = String(addr || '').replace(/\n/g, ' ');
-    var pool = [];
-    var par = src.match(/\(([^)]*)\)/g) || [];
-    for (var i = 0; i < par.length; i++) pool.push(par[i].replace(/[()]/g, ''));
-    pool.push(src.replace(/\([^)]*\)/g, ' '));
-    var place = '';
-    for (var j = 0; j < pool.length; j++) {
-      var seg = String(pool[j]).split(/[·,]/)[0].trim();
-      if (seg && seg.indexOf('미확인') < 0 && /(동|읍|면|로|길|구)/.test(seg)) { place = seg; break; }
+  /**
+   * 지도 검색어 — 소재지에서 주소 부분만 뽑는다. 상호는 붙이지 않는다(주소+상호 조합은 지도 검색 오류가 잦음).
+   * ① 도로명+번지(…로·길 123), ② 지번(…동 123-4) 순으로 쓰고, 괄호 안 아파트명·동·호수는 뺀다.
+   * 주소가 비었거나 '미확인'이면 빈 문자열을 돌려준다.
+   */
+  function addrQuery(addr) {
+    var src = String(addr || '').replace(/\n/g, ' ').replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!src || src.indexOf('미확인') >= 0) return '';
+    var m = src.match(/[가-힣0-9]+(?:로|길)\s*\d+(?:-\d+)?/) || src.match(/[가-힣]+동\s*\d+(?:-\d+)?/);
+    if (!m) return '';
+    var q = m[0].replace(/\s+/g, ' ').trim();
+    if (!/^대구/.test(q)) {
+      if (/^(달서구|중구|남구|서구|동구|북구|수성구|달성군)/.test(q)) q = '대구 ' + q;
+      else {
+        var gu = src.match(/(달서구|중구|남구|서구|동구|북구|수성구|달성군)/);
+        if (gu) q = '대구 ' + gu[1] + ' ' + q;
+      }
     }
-    if (!place) return String(name || '');
-    if (!/^대구/.test(place) && /^(달서구|중구|남구|서구|동구|북구|수성구|달성군)/.test(place)) place = '대구 ' + place;
-    return (place + ' ' + (name || '')).trim();
+    return q;
+  }
+
+  /** 지도 링크 — 주소가 있으면 주소만으로 검색하고, 없으면 시트 좌표(M·N열)로 핀을 띄운다. */
+  function mapHref(addr, name, lat, lng) {
+    var q = addrQuery(addr);
+    if (q) return 'https://map.kakao.com/link/search/' + encodeURIComponent(q);
+    if (lat && lng) return 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || '')) + ',' + lat + ',' + lng;
+    return 'https://map.kakao.com/link/search/' + encodeURIComponent(String(name || ''));
   }
 
   function toast(msg) {
@@ -698,7 +710,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var key = keyOf(it);
     var on = !!it.checked;
     var memoVal = (it.draft !== undefined) ? it.draft : it.memo;
-    var head, metas = [], tel, mapLabel, mapQ, memoPh;
+    var head, metas = [], tel, mapLabel, mapURL, memoPh;
 
     if (it.type === 'regular') {
       var seq = seqOf(it);
@@ -713,7 +725,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       }
       if (it.note) metas.push('<span class="note">' + esc(it.note) + '</span>');
       tel = info.dial;
-      mapQ = mapQuery(it.addr, it.name);
+      mapURL = mapHref(it.addr, it.name, it.lat, it.lng);
       mapLabel = '지도';
       memoPh = '상담·방문 메모 (자동 저장)';
     } else {
@@ -723,7 +735,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       if (it.item) metas.push('<span>' + esc(it.item) + '</span>');
       if (it.contact) metas.push('<span>' + esc(it.contact) + '</span>');
       tel = telOf(it.contact);
-      mapQ = mapQuery(it.contact, it.client);
+      mapURL = mapHref(it.contact, it.client, it.lat, it.lng);
       mapLabel = '지도';
       memoPh = '결과·메모 (자동 저장)';
     }
@@ -750,7 +762,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
         '</div>' +
       '</div>' +
       '<div class="acts">' + telBtn +
-        '<a class="btn map" href="https://map.kakao.com/link/search/' + encodeURIComponent(mapQ) +
+        '<a class="btn map" href="' + mapURL +
           '" target="_blank" rel="noopener" aria-label="' + esc(it.name || it.client) + ' 지도 보기">' + ICON_PIN + mapLabel + '</a>' +
       '</div>' +
       '<input class="memo" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" placeholder="' + memoPh +
