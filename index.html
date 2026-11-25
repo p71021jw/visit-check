@@ -298,7 +298,7 @@ body.mc-open #mapview{padding-bottom:136px}
     <div class="mc-acts">
       <a class="btn tel" id="mc-tel" href="#" aria-label="전화 걸기">전화걸기</a>
       <button class="btn done" id="mc-done" type="button">완료 체크</button>
-      <a class="btn map" id="mc-route" href="#" target="_blank" rel="noopener">길찾기</a>
+      <a class="btn map" id="mc-route" href="#" rel="noopener">길찾기</a>
     </div>
   </div>
 </div>
@@ -448,12 +448,32 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     return q;
   }
 
+  /* ── 안드로이드에서 카카오맵 앱을 바로 연다 ────────────
+     안드로이드는 intent:// 로 앱(net.daum.android.map)을 직접 실행하고,
+     앱이 없을 때만 S.browser_fallback_url 로 카카오맵 웹주소를 연다. */
+  var IS_ANDROID = /Android/i.test(navigator.userAgent || '');
+
+  /** schemePath·fallbackUrl → 안드로이드면 intent:// 링크, 아니면 웹 주소 그대로 */
+  function kakaoIntent(schemePath, fallbackUrl) {
+    if (!IS_ANDROID) return fallbackUrl;
+    return 'intent://' + schemePath + '#Intent;scheme=kakaomap;package=net.daum.android.map;S.browser_fallback_url=' +
+      encodeURIComponent(fallbackUrl) + ';end';
+  }
+
   /** 지도 링크 — 주소가 있으면 주소만으로 검색하고, 없으면 시트 좌표(M·N열)로 핀을 띄운다. */
   function mapHref(addr, name, lat, lng) {
     var q = addrQuery(addr);
-    if (q) return 'https://map.kakao.com/link/search/' + encodeURIComponent(q);
-    if (lat && lng) return 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || '')) + ',' + lat + ',' + lng;
-    return 'https://map.kakao.com/link/search/' + encodeURIComponent(String(name || ''));
+    var webUrl;
+    if (q) {
+      webUrl = 'https://map.kakao.com/link/search/' + encodeURIComponent(q);
+      return kakaoIntent('search?q=' + encodeURIComponent(q), webUrl);
+    }
+    if (lat && lng) {
+      webUrl = 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || '')) + ',' + lat + ',' + lng;
+      return kakaoIntent('look?p=' + lat + ',' + lng, webUrl);
+    }
+    webUrl = 'https://map.kakao.com/link/search/' + encodeURIComponent(String(name || ''));
+    return kakaoIntent('search?q=' + encodeURIComponent(String(name || '')), webUrl);
   }
 
   function toast(msg) {
@@ -762,8 +782,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
         '</div>' +
       '</div>' +
       '<div class="acts">' + telBtn +
-        '<a class="btn map" href="' + mapURL +
-          '" target="_blank" rel="noopener" aria-label="' + esc(it.name || it.client) + ' 지도 보기">' + ICON_PIN + mapLabel + '</a>' +
+        '<a class="btn map" href="' + mapURL + '"' +
+          (IS_ANDROID ? '' : ' target="_blank"') +
+          ' rel="noopener" aria-label="' + esc(it.name || it.client) + ' 지도 보기">' + ICON_PIN + mapLabel + '</a>' +
       '</div>' +
       '<input class="memo" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" placeholder="' + memoPh +
         '" aria-label="' + esc((it.name || it.client || '') + ' 메모') + '" value="' + esc(memoVal) + '">' +
@@ -981,7 +1002,12 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     doneBtn.className = 'btn done' + (it.checked ? ' on' : '');
     doneBtn.disabled = false;
 
-    $('mc-route').href = 'https://map.kakao.com/link/to/' + encodeURIComponent(it.name) + ',' + it.lat + ',' + it.lng;
+    var routeA = $('mc-route');
+    var webRoute = 'https://map.kakao.com/link/to/' + encodeURIComponent(it.name) + ',' + it.lat + ',' + it.lng;
+    routeA.href = kakaoIntent('route?ep=' + it.lat + ',' + it.lng + '&by=car', webRoute);
+    /* intent:// 링크에 target=_blank 가 있으면 빈 새 탭이 열리므로 안드로이드에서는 뺀다 */
+    if (IS_ANDROID) routeA.removeAttribute('target');
+    else routeA.setAttribute('target', '_blank');
   }
 
   function initMap() {
