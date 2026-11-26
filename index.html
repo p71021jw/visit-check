@@ -1241,6 +1241,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       var build = function () {
         M.loading = false;
         if (M.ready) return;
+        /* 만드는 사이에 목록으로 빠졌으면 숨은 채(크기 0) 만들지 않고 다음 진입 때 만든다 */
+        if (S.view !== 'map' || !mapVisible()) return;
         var kakao = window.kakao;
         if (!kakao || !kakao.maps) { M.failed = 'sdk'; mapNote('sdk'); return; }
         var items = mappableItems();
