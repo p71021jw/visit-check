@@ -9,7 +9,7 @@
   "scope": "/visit-check/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#F3F6F5",
   "theme_color": "#00453A",
   "icons": [
