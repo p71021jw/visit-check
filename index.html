@@ -136,7 +136,7 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .memo:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.1)}
 .sec{display:flex;align-items:center;gap:7px;margin:10px 2px 1px;font-size:10px;font-weight:700;color:#6D8279;letter-spacing:.02em}
 /* 구분선이 있으면 목록 첫 줄에 바짝 붙이고, 둘 사이 구분선은 카드와의 간격만 살짝 둔다 */
-.sec:first-child{margin-top:0}
+.sec:first-child{margin:-7px 2px 1px}   /* '전체 N곳' 줄과의 간격 12px → 5px */
 .sec:not(:first-child){margin:6px 2px 0}
 .sec:before,.sec:after{content:"";height:1px;background:#DFE9E5;flex:1}
 .empty{padding:34px 18px;text-align:center;font-size:12px;color:var(--sub);line-height:1.6}
