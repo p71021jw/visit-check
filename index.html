@@ -1031,6 +1031,24 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     startMyLoc();
   }
 
+  /* 지도 탭이 화면에 떠 있는지 */
+  function mapVisible() {
+    var v = $('mapview');
+    return !!(v && !v.hidden);
+  }
+
+  /* 컨테이너 크기를 다시 잡고(relayout) 중심·배율을 즉시 맞춘다.
+     panTo는 애니메이션이라 relayout 에 취소되므로 쓰지 않는다. */
+  function fitMapTo(pos, maxLevel) {
+    if (!M.ready || !M.map) return;
+    try { M.map.relayout(); } catch (e) {}
+    try {
+      var cap = (typeof maxLevel === 'number') ? maxLevel : 4;
+      if (pos) M.map.setCenter(pos);
+      M.map.setLevel(Math.min(M.map.getLevel(), cap));
+    } catch (e) {}
+  }
+
   function renderMap() {
     $('mapcard').hidden = !M.selKey;
     if (!M.selKey) document.body.classList.remove('mc-open');
@@ -1048,6 +1066,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     mapNote('');
     var kakao = window.kakao;
     var map = M.map;
+    /* 목록에서 지도로 막 바뀌면 지도가 숨어 있던 동안 컨테이너 크기를 잃는다.
+       크기를 다시 잡지 않으면 타일이 왼쪽 위 1/4만 그려지므로 먼저 relayout 한다. */
+    if (mapVisible()) { try { map.relayout(); } catch (e) {} }
     clearOverlays();
     startMyLoc();   /* 지도 탭이 열려 있는 동안 내 위치 실시간 추적 */
     var bounds = new kakao.maps.LatLngBounds();
@@ -1092,8 +1113,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (M.selKey && selOverlay) {
       var sel = S.byKey[M.selKey];
       if (sel) {
-        map.panTo(new kakao.maps.LatLng(sel.lat, sel.lng));
-        map.setLevel(Math.min(map.getLevel(), 4));
+        /* panTo(애니메이션)는 relayout 에 취소되므로 setCenter 로 즉시 중심을 잡는다 */
+        fitMapTo(new kakao.maps.LatLng(Number(sel.lat), Number(sel.lng)), 4);
         showMapCard(sel);   /* 목록에서 [지도]로 처음 들어온 경우에도 하단 카드가 바로 뜨게 */
       }
     } else if (items.length === 1) {
@@ -1150,34 +1171,23 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* 지도가 아직 없으면(첫 진입) initMap 콜백의 renderMap이 selKey를 보고 이동한다.
-     이미 떠 있으면 그 핀으로 이동한다. (relayout을 먼저 부르면 카카오맵이 진행 중인
-     panTo를 취소해 버려서, 이동을 먼저 하고 안 먹혔을 때만 relayout 후 다시 옮긴다) */
+  /* 지도가 아직 없으면(첫 진입) initMap 이 중심을 잡고, 이미 떠 있으면 그 핀으로 옮긴다.
+     목록에서 넘어온 직후에는 브라우저가 컨테이너 크기를 확정하기 전이라, 한 프레임·
+     120ms·350ms 에서 relayout + setCenter 를 한 번씩 보정해 어떤 단말·타이밍에서도
+     타일이 꽉 차게 그려지고 핀이 정중앙에 오게 한다. */
   function focusMapPin(it) {
     if (!window.kakao || !M.ready || !M.map) return;
     var kakao = window.kakao;
-    var lat = Number(it.lat), lng = Number(it.lng);
-    var pos = new kakao.maps.LatLng(lat, lng);
+    var pos = new kakao.maps.LatLng(Number(it.lat), Number(it.lng));
     var key = keyOf(it);
-    var jump = function () {
-      if (!M.map || M.selKey !== key) return;
-      try {
-        M.map.panTo(pos);
-        if (M.map.getLevel() > 4) M.map.setLevel(4);
-      } catch (e) {}
+    var settle = function () {
+      if (!M.map || M.selKey !== key || !mapVisible()) return;
+      fitMapTo(pos, 4);
     };
-    /* 목록에서 넘어올 때는 지도가 숨어 있던 동안 크기를 잃었으므로 레이아웃이 끝난 뒤에 옮긴다 */
-    if (window.requestAnimationFrame) window.requestAnimationFrame(jump);
-    else setTimeout(jump, 0);
-    setTimeout(function () {
-      if (!M.map || M.selKey !== key || !M.map.getCenter) return;
-      var c = null;
-      try { c = M.map.getCenter(); } catch (e) { return; }
-      if (!c) return;
-      if (Math.abs(c.getLat() - lat) < 5e-4 && Math.abs(c.getLng() - lng) < 5e-4) return;
-      try { M.map.relayout(); } catch (e) {}
-      setTimeout(jump, 60);
-    }, 600);
+    if (window.requestAnimationFrame) window.requestAnimationFrame(settle);
+    else setTimeout(settle, 0);
+    setTimeout(settle, 120);
+    setTimeout(settle, 350);
   }
 
   function showMapCard(it) {
@@ -1224,23 +1234,35 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     M.loading = true;
     mapNote('');
     loadKakao(function (err) {
-      M.loading = false;
-      if (err) { M.failed = err; mapNote(err); return; }
-      var kakao = window.kakao;
-      var items = mappableItems();
-      /* 목록에서 [지도]를 눌러 들어온 경우에는 처음부터 그 중개사 자리에서 지도를 연다.
-         (방금 만든 지도는 panTo를 받지 못하는 경우가 있어 생성 시 중심으로 잡는다) */
-      var sel = M.selKey ? S.byKey[M.selKey] : null;
-      var center = new kakao.maps.LatLng(35.8485, 128.5385);   // 죽전네거리 기준
-      if (M.center) center = M.center;
-      else if (sel && hasLL(sel.lat, sel.lng)) center = new kakao.maps.LatLng(Number(sel.lat), Number(sel.lng));
-      else if (items.length) center = new kakao.maps.LatLng(items[0].lat, items[0].lng);
-      M.map = new kakao.maps.Map($('map'), { center: center, level: sel ? 4 : 7 });
-      M.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
-      M.ready = true;
-      M.failed = '';
-      renderMap();
-      if (sel) setTimeout(function () { focusMapPin(sel); }, 120);
+      if (err) { M.loading = false; M.failed = err; mapNote(err); return; }
+      /* 목록→지도로 막 바뀐 직후에는 브라우저가 레이아웃을 다시 계산하기 전이라
+         컨테이너 크기를 잘못 읽어 지도가 1/4만 그려진다. 레이아웃이 확정된
+         두 프레임 뒤에 지도를 만든다. */
+      var build = function () {
+        M.loading = false;
+        if (M.ready) return;
+        var kakao = window.kakao;
+        if (!kakao || !kakao.maps) { M.failed = 'sdk'; mapNote('sdk'); return; }
+        var items = mappableItems();
+        /* 목록에서 [지도]를 눌러 들어온 경우에는 처음부터 그 중개사 자리에서 지도를 연다. */
+        var sel = M.selKey ? S.byKey[M.selKey] : null;
+        var center = new kakao.maps.LatLng(35.8485, 128.5385);   // 죽전네거리 기준
+        if (M.center) center = M.center;
+        else if (sel && hasLL(sel.lat, sel.lng)) center = new kakao.maps.LatLng(Number(sel.lat), Number(sel.lng));
+        else if (items.length) center = new kakao.maps.LatLng(items[0].lat, items[0].lng);
+        M.map = new kakao.maps.Map($('map'), { center: center, level: sel ? 4 : 7 });
+        M.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+        M.ready = true;
+        M.failed = '';
+        renderMap();
+        var shot = M.selKey ? S.byKey[M.selKey] : null;
+        if (shot) setTimeout(function () { focusMapPin(shot); }, 60);
+      };
+      if (window.requestAnimationFrame) {
+        window.requestAnimationFrame(function () { window.requestAnimationFrame(build); });
+      } else {
+        setTimeout(build, 30);
+      }
     });
   }
 
@@ -1491,8 +1513,20 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     Array.prototype.forEach.call(document.querySelectorAll('#viewtog .vt'), function (x) {
       x.classList.toggle('on', x.dataset.view === v);
     });
+    /* 목록으로 넘어가면 지도 하단 카드도 함께 닫는다 */
+    if (v === 'list') closeMapCard();
     render();
-    if (v === 'map') window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (v === 'map') {
+      /* 숨어 있던 동안 잃은 크기를 되찾아 타일이 잘리지 않게 한다 */
+      if (M.ready && M.map) {
+        try { M.map.relayout(); } catch (e) {}
+        setTimeout(function () {
+          if (S.view !== 'map' || !M.ready || !M.map || !mapVisible()) return;
+          try { M.map.relayout(); } catch (e) {}
+        }, 150);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   });
 
   var qTimer = null;
