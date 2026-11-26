@@ -491,17 +491,20 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       encodeURIComponent(fallbackUrl) + ';end';
   }
 
-  /** 지도 링크 — 주소가 있으면 주소만으로 검색하고, 없으면 시트 좌표(M·N열)로 핀을 띄운다. */
+  /** 지도 링크 — 시트 좌표(M·N열)가 있으면 그 좌표에 핀을 꽂은 화면(look)으로 바로 열고,
+      좌표가 없을 때(예: 개별 일정)만 주소로, 주소도 없으면 상호로 검색한다. */
   function mapHref(addr, name, lat, lng) {
-    var q = addrQuery(addr);
+    var hasLL = lat !== null && lat !== undefined && lng !== null && lng !== undefined &&
+                lat !== '' && lng !== '' && isFinite(Number(lat)) && isFinite(Number(lng));
     var webUrl;
+    if (hasLL) {
+      webUrl = 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || addr || '')) + ',' + lat + ',' + lng;
+      return kakaoIntent('look?p=' + lat + ',' + lng, webUrl);
+    }
+    var q = addrQuery(addr);
     if (q) {
       webUrl = 'https://map.kakao.com/link/search/' + encodeURIComponent(q);
       return kakaoIntent('search?q=' + encodeURIComponent(q), webUrl);
-    }
-    if (lat && lng) {
-      webUrl = 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || '')) + ',' + lat + ',' + lng;
-      return kakaoIntent('look?p=' + lat + ',' + lng, webUrl);
     }
     webUrl = 'https://map.kakao.com/link/search/' + encodeURIComponent(String(name || ''));
     return kakaoIntent('search?q=' + encodeURIComponent(String(name || '')), webUrl);
