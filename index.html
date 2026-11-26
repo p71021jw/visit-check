@@ -491,13 +491,22 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       encodeURIComponent(fallbackUrl) + ';end';
   }
 
+  /** 시트 좌표(M·N열)가 지도에 쓸 수 있는 값인지 */
+  function hasLL(lat, lng) {
+    return lat !== null && lat !== undefined && lng !== null && lng !== undefined &&
+           lat !== '' && lng !== '' && isFinite(Number(lat)) && isFinite(Number(lng));
+  }
+
+  /** 앱 안 지도 탭(번호 핀)에 찍히는 항목인지 — 좌표가 있는 정기방문만 */
+  function canMapInApp(it) {
+    return !!it && it.type === 'regular' && hasLL(it.lat, it.lng);
+  }
+
   /** 지도 링크 — 시트 좌표(M·N열)가 있으면 그 좌표에 핀을 꽂은 화면(look)으로 바로 열고,
       좌표가 없을 때(예: 개별 일정)만 주소로, 주소도 없으면 상호로 검색한다. */
   function mapHref(addr, name, lat, lng) {
-    var hasLL = lat !== null && lat !== undefined && lng !== null && lng !== undefined &&
-                lat !== '' && lng !== '' && isFinite(Number(lat)) && isFinite(Number(lng));
     var webUrl;
-    if (hasLL) {
+    if (hasLL(lat, lng)) {
       webUrl = 'https://map.kakao.com/link/map/' + encodeURIComponent(String(name || addr || '')) + ',' + lat + ',' + lng;
       return kakaoIntent('look?p=' + lat + ',' + lng, webUrl);
     }
@@ -803,6 +812,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var vdate = (it.type === 'regular' && it.date)
       ? '<span class="vdate">방문 ' + esc(it.date) + '</span>' : '';
 
+    /* 좌표가 있는 정기방문이면 [지도]는 외부 카카오맵 앱으로 나가지 않고
+       앱 안 지도 탭의 그 핀으로 넘어간다(data-act="inappmap").
+       좌표가 없는 곳·개별 일정은 지금처럼 카카오맵 링크로 연다. */
+    var inApp = canMapInApp(it);
+
     return '<article class="card' + (on ? ' done' : '') + '" data-key="' + key + '" data-type="' + it.type +
       '" data-row="' + it.row + '">' +
       '<div class="card-top" data-act="toggle">' +
@@ -818,6 +832,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       '<div class="acts">' + telBtn +
         '<a class="btn map" href="' + mapURL + '"' +
           (IS_ANDROID ? '' : ' target="_blank"') +
+          (inApp ? ' data-act="inappmap"' : '') +
           ' rel="noopener" aria-label="' + esc(it.name || it.client) + ' 지도 보기">' + ICON_PIN + mapLabel + '</a>' +
       '</div>' +
       '<input class="memo" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" placeholder="' + memoPh +
@@ -1079,6 +1094,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       if (sel) {
         map.panTo(new kakao.maps.LatLng(sel.lat, sel.lng));
         map.setLevel(Math.min(map.getLevel(), 4));
+        showMapCard(sel);   /* 목록에서 [지도]로 처음 들어온 경우에도 하단 카드가 바로 뜨게 */
       }
     } else if (items.length === 1) {
       map.setCenter(bounds.getSouthWest ? new kakao.maps.LatLng(items[0].lat, items[0].lng) : null);
@@ -1116,6 +1132,40 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       var cls = 'pin' + (it.checked ? ' done' : '') + (keyOf(it) === M.selKey ? ' sel' : '');
       if (el.className !== cls) el.className = cls;
     }
+  }
+
+  /* 목록 카드의 [지도] — 외부 카카오맵 앱 대신 앱 안 지도 탭으로 넘어가
+     그 중개사 핀으로 확대·이동하고 하단 카드를 연다. */
+  function openInAppMap(it) {
+    if (!canMapInApp(it)) return;
+    flushAll();                 /* 대기 중인 메모를 먼저 저장 */
+    M.selKey = keyOf(it);
+    S.view = 'map';
+    Array.prototype.forEach.call(document.querySelectorAll('#viewtog .vt'), function (x) {
+      x.classList.toggle('on', x.dataset.view === 'map');
+    });
+    render();                   /* #mapview 표시 → renderMap → 필요하면 initMap */
+    showMapCard(it);
+    focusMapPin(it);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* 지도가 아직 없으면(첫 진입) initMap 콜백의 renderMap이 selKey를 보고 이동한다.
+     이미 떠 있으면 숨어 있던 동안 잰 크기를 relayout으로 바로잡고 그 핀으로 panTo. */
+  function focusMapPin(it) {
+    if (!window.kakao || !M.ready || !M.map) return;
+    var kakao = window.kakao;
+    var pos = new kakao.maps.LatLng(Number(it.lat), Number(it.lng));
+    var go = function () {
+      if (!M.map) return;
+      try {
+        M.map.relayout();
+        M.map.panTo(pos);
+        M.map.setLevel(Math.min(M.map.getLevel(), 4));
+      } catch (e) {}
+    };
+    go();
+    setTimeout(go, 60);        /* 레이아웃이 끝난 뒤 한 번 더 — 타일이 잘리거나 중심이 어긋나는 것 방지 */
   }
 
   function showMapCard(it) {
@@ -1373,6 +1423,16 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   /* ── 이벤트 ───────────────────────────────────────── */
   $('list').addEventListener('click', function (ev) {
+    /* 카드의 [지도] — 앱 안 지도 탭으로 전환해 그 중개사 핀으로 확대·이동 */
+    var mapBtn = ev.target.closest('[data-act="inappmap"]');
+    if (mapBtn) {
+      ev.preventDefault();
+      var mcard = mapBtn.closest('.card');
+      var mit = mcard ? S.byKey[mcard.dataset.key] : null;
+      if (mit && canMapInApp(mit)) { openInAppMap(mit); return; }
+      if (mapBtn.href) location.href = mapBtn.href;   /* 좌표를 못 읽으면 카카오맵 링크로 */
+      return;
+    }
     var top = ev.target.closest('[data-act="toggle"]');
     if (!top) return;
     onToggle(top.closest('.card'));
