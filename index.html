@@ -139,6 +139,23 @@ body.mc-open #mapview{padding-bottom:136px}
 .mapnote a{color:var(--hana)}
 .maplegend{display:flex;gap:10px;align-items:center;margin:7px 2px 0;font-size:9.5px;color:var(--sub)}
 .maplegend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:-1px}
+/* 지도 위 '내 위치' 버튼 · 파란 점 마커 */
+.mapwrap{position:relative}
+.mylocbtn{position:absolute;right:10px;bottom:10px;z-index:5;display:inline-flex;align-items:center;gap:4px;
+  height:30px;padding:0 10px 0 8px;border:1px solid #CFE0DA;border-radius:999px;background:#fff;
+  font:inherit;font-size:11px;font-weight:700;letter-spacing:-.01em;color:#00695A;cursor:pointer;
+  box-shadow:0 2px 8px rgba(2,48,40,.22)}
+.mylocbtn svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.mylocbtn:active{background:#F0F8F5}
+.mylocbtn.wait{color:#8A9C95}
+.mylocbtn.off{display:none}
+.meloc{position:relative;width:16px;height:16px;pointer-events:none}
+.meloc i,.meloc b{position:absolute;left:50%;top:50%;border-radius:50%}
+.meloc i{width:16px;height:16px;margin:-8px 0 0 -8px;background:rgba(26,115,232,.42);
+  animation:melocPulse 2s ease-out infinite}
+.meloc b{width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border:2.5px solid #fff;background:#1A73E8;
+  box-shadow:0 1px 4px rgba(0,0,0,.4)}
+@keyframes melocPulse{0%{transform:scale(.55);opacity:.9}75%,100%{transform:scale(2.7);opacity:0}}
 /* 지도 위 번호 핀 */
 .pin{position:relative;width:26px;height:26px;border-radius:50% 50% 50% 5px;transform:rotate(-45deg);
   background:#E07C1D;border:2px solid #fff;box-shadow:0 2px 7px rgba(0,0,0,.34);cursor:pointer;
@@ -273,11 +290,17 @@ body.mc-open #mapview{padding-bottom:136px}
 <div class="empty" id="empty" hidden></div>
 
 <section id="mapview" hidden>
-  <div id="map"></div>
+  <div class="mapwrap">
+    <div id="map"></div>
+    <button class="mylocbtn" id="myloc" type="button" aria-label="내 위치로 지도 이동">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.4v3.2M12 18.4v3.2M2.4 12h3.2M18.4 12h3.2"/></svg><span id="myloc-txt">내 위치</span>
+    </button>
+  </div>
   <div class="maplegend" id="maplegend">
     <span><i style="background:#E07C1D"></i>미방문</span>
     <span><i style="background:#0B9075"></i>방문완료</span>
     <span><i style="background:#C0392B"></i>선택</span>
+    <span><i style="background:#1A73E8"></i>내 위치</span>
   </div>
   <div class="mapnote" id="mapnote"></div>
 </section>
@@ -378,7 +401,13 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     map: null,
     overlays: [],
     selKey: '',
-    center: null
+    center: null,
+    /* 내 위치 추적 */
+    watchId: null,
+    myPos: null,
+    myOverlay: null,
+    myDenied: false,
+    wantPan: false
   };
 
   /* ── 작은 도우미 ──────────────────────────────────── */
@@ -798,6 +827,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     $('mapview').hidden = (S.view !== 'map');
     $('searchrow').hidden = (S.view === 'map');
     if (S.view === 'map') $('sresult').hidden = true;
+    /* 지도 탭을 벗어나면 위치 추적을 멈춰 배터리를 줄인다 */
+    if (S.view !== 'map' || S.tab === '개별') stopMyLoc();
 
     if (S.view === 'list') {
       var rows = visibleItems();
@@ -850,7 +881,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   function mapNote(msg) {
     var n = $('mapnote');
-    if (!msg) { n.innerHTML = '<b>핀 번호가 방문 순서</b>입니다. 핀을 누르면 아래 카드에서 전화·완료 체크·길찾기를 할 수 있습니다.'; return; }
+    if (!msg) { n.innerHTML = '<b>핀 번호가 방문 순서</b>입니다. 핀을 누르면 아래 카드에서 전화·완료 체크·길찾기를 할 수 있습니다. 오른쪽 아래 <b>내 위치</b> 버튼을 누르면 현재 위치로 이동합니다.'; return; }
     if (msg === 'nokey') {
       n.innerHTML = '지도 키가 아직 없습니다. <b>index.html</b> 맨 위 <b>KAKAO_JS_KEY</b> 한 곳에 카카오 JavaScript 키를 넣고 다시 배포하면 지도가 뜹니다. (지금도 목록·체크·메모는 정상 동작합니다)';
     } else if (msg === 'sdk') {
@@ -868,6 +899,116 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       try { M.overlays[i].setMap(null); } catch (e) {}
     }
     M.overlays = [];
+  }
+
+  /* ── 내 위치(geolocation) ─────────────────────────── */
+  var MYLOC_OPTS = { enableHighAccuracy: true, maximumAge: 2000, timeout: 15000 };
+
+  function myLocSupported() {
+    return !!(navigator.geolocation && navigator.geolocation.watchPosition);
+  }
+
+  function setMyLocBtn(kind, label) {
+    var b = $('myloc'), t = $('myloc-txt');
+    if (!b) return;
+    if (!myLocSupported()) { b.className = 'mylocbtn off'; return; }
+    b.className = 'mylocbtn' + (kind ? ' ' + kind : '');
+    if (t) t.textContent = label || '내 위치';
+  }
+
+  /* 지도 위 파란 점(펄스) 그리기·이동 */
+  function drawMyLoc(lat, lng) {
+    var kakao = window.kakao;
+    if (!kakao || !M.map) return;
+    M.myPos = { lat: lat, lng: lng };
+    var pos = new kakao.maps.LatLng(lat, lng);
+    if (!M.myOverlay) {
+      var el = document.createElement('div');
+      el.className = 'meloc';
+      el.setAttribute('aria-hidden', 'true');
+      el.innerHTML = '<i></i><b></b>';
+      M.myOverlay = new kakao.maps.CustomOverlay({
+        position: pos, content: el, xAnchor: 0.5, yAnchor: 0.5, clickable: false, zIndex: 2
+      });
+    } else {
+      M.myOverlay.setPosition(pos);
+    }
+    M.myOverlay.setMap(M.map);
+    if (M.wantPan) {
+      M.wantPan = false;
+      M.map.panTo(pos);
+      if (M.map.getLevel() > 4) M.map.setLevel(4);
+      setMyLocBtn();
+    }
+  }
+
+  function stopMyLoc() {
+    if (M.watchId !== null && navigator.geolocation) {
+      try { navigator.geolocation.clearWatch(M.watchId); } catch (e) {}
+    }
+    M.watchId = null;
+    M.wantPan = false;
+    setMyLocBtn();
+  }
+
+  function startMyLoc() {
+    if (!myLocSupported()) { setMyLocBtn(); return; }
+    if (M.watchId !== null) {
+      if (M.myOverlay && M.map) M.myOverlay.setMap(M.map);
+      return;
+    }
+    if (!M.map) return;
+    /* 권한이 거부된 상태면 화면을 다시 그릴 때마다 재요청하지 않는다(버튼을 누르면 재시도) */
+    if (M.myDenied && !M.wantPan) { setMyLocBtn(); return; }
+    try {
+      M.watchId = navigator.geolocation.watchPosition(function (res) {
+        var c = (res && res.coords) || {};
+        if (typeof c.latitude !== 'number' || typeof c.longitude !== 'number') return;
+        M.myDenied = false;
+        drawMyLoc(c.latitude, c.longitude);
+      }, function (err) {
+        var code = (err && err.code) || 0;
+        if (code === 1) {            /* 권한 거부 */
+          M.myDenied = true;
+          stopMyLoc();
+          toast('위치 권한이 꺼져 있습니다. 브라우저 주소창의 자물쇠에서 위치를 허용해 주세요.');
+        } else if (M.wantPan) {      /* 위치 확인 실패·시간 초과 */
+          M.wantPan = false;
+          setMyLocBtn();
+          toast('현재 위치를 아직 찾지 못했습니다. 잠시 후 다시 눌러 주세요.');
+        }
+      }, MYLOC_OPTS);
+    } catch (e) {
+      setMyLocBtn();
+    }
+  }
+
+  /* '내 위치' 버튼: 현재 위치로 이동(권한이 없으면 이때 요청) */
+  function onMyLocClick() {
+    if (!myLocSupported()) { toast('이 브라우저에서는 위치를 사용할 수 없습니다.'); return; }
+    if (!M.ready) {
+      M.wantPan = true;
+      setMyLocBtn('wait', '지도 준비 중');
+      if (M.failed) { M.wantPan = false; setMyLocBtn(); toast('지도를 불러오지 못해 위치를 표시할 수 없습니다.'); return; }
+      initMap();
+      return;
+    }
+    if (M.myPos) {
+      var kakao = window.kakao;
+      if (kakao) {
+        M.map.panTo(new kakao.maps.LatLng(M.myPos.lat, M.myPos.lng));
+        if (M.map.getLevel() > 4) M.map.setLevel(4);
+      }
+      var retry = M.myDenied;
+      M.myDenied = false;
+      if (retry) { M.wantPan = true; setMyLocBtn('wait', '권한 확인 중'); }
+      else setMyLocBtn();
+      startMyLoc();
+      return;
+    }
+    M.wantPan = true;
+    setMyLocBtn('wait', '위치 확인 중');
+    startMyLoc();
   }
 
   function renderMap() {
@@ -888,6 +1029,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var kakao = window.kakao;
     var map = M.map;
     clearOverlays();
+    startMyLoc();   /* 지도 탭이 열려 있는 동안 내 위치 실시간 추적 */
     var bounds = new kakao.maps.LatLngBounds();
     var selOverlay = null;
 
@@ -1296,6 +1438,16 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (M.ready) renderMapPinsOnly();
   }
   $('mc-x').addEventListener('click', closeMapCard);
+
+  /* 내 위치 버튼 */
+  $('myloc').addEventListener('click', onMyLocClick);
+  setMyLocBtn();
+
+  /* 앱을 벗어나면 추적 중지, 돌아오면 재개 */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) { stopMyLoc(); return; }
+    if (S.view === 'map' && S.tab !== '개별' && M.ready) startMyLoc();
+  });
 
   $('mc-done').addEventListener('click', function () {
     var it = S.byKey[M.selKey];
