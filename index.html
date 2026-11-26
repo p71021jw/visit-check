@@ -135,6 +135,9 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .memo::placeholder{color:#A5B7B1}
 .memo:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.1)}
 .sec{display:flex;align-items:center;gap:7px;margin:10px 2px 1px;font-size:10px;font-weight:700;color:#6D8279;letter-spacing:.02em}
+/* 구분선이 있으면 목록 첫 줄에 바짝 붙이고, 둘 사이 구분선은 카드와의 간격만 살짝 둔다 */
+.sec:first-child{margin-top:0}
+.sec + .sec{margin:6px 2px 0}
 .sec:before,.sec:after{content:"";height:1px;background:#DFE9E5;flex:1}
 .empty{padding:34px 18px;text-align:center;font-size:12px;color:var(--sub);line-height:1.6}
 .foot{margin:2px 16px 18px;font-size:9.5px;line-height:1.6;color:#869891;text-align:center}
@@ -871,11 +874,17 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       if (S.tab === '전체' && !S.q) {
         var regs = S.reg.filter(matchesQuery);
         var inds = S.ind.filter(matchesQuery);
-        html += '<div class="sec">정기방문 ' + regs.length + '곳</div>';
-        html += regs.map(cardHTML).join('');
         if (inds.length) {
+          /* 개별 일정이 있으면 그것부터 맨 위에 — 먼저 처리해야 하는 일정이 위로 올라온다 */
           html += '<div class="sec">개별 영업일정 ' + inds.length + '건</div>';
           html += inds.map(cardHTML).join('');
+          if (regs.length) {
+            html += '<div class="sec">정기방문 ' + regs.length + '곳</div>';
+            html += regs.map(cardHTML).join('');
+          }
+        } else {
+          /* 개별 일정이 없으면 구분선 없이 정기방문 카드만 (1~4주차 탭처럼 첫 카드가 바로) */
+          html += regs.map(cardHTML).join('');
         }
       } else {
         html = rows.map(cardHTML).join('');
