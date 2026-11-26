@@ -1151,21 +1151,33 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   }
 
   /* 지도가 아직 없으면(첫 진입) initMap 콜백의 renderMap이 selKey를 보고 이동한다.
-     이미 떠 있으면 숨어 있던 동안 잰 크기를 relayout으로 바로잡고 그 핀으로 panTo. */
+     이미 떠 있으면 그 핀으로 이동한다. (relayout을 먼저 부르면 카카오맵이 진행 중인
+     panTo를 취소해 버려서, 이동을 먼저 하고 안 먹혔을 때만 relayout 후 다시 옮긴다) */
   function focusMapPin(it) {
     if (!window.kakao || !M.ready || !M.map) return;
     var kakao = window.kakao;
-    var pos = new kakao.maps.LatLng(Number(it.lat), Number(it.lng));
-    var go = function () {
-      if (!M.map) return;
+    var lat = Number(it.lat), lng = Number(it.lng);
+    var pos = new kakao.maps.LatLng(lat, lng);
+    var key = keyOf(it);
+    var jump = function () {
+      if (!M.map || M.selKey !== key) return;
       try {
-        M.map.relayout();
         M.map.panTo(pos);
-        M.map.setLevel(Math.min(M.map.getLevel(), 4));
+        if (M.map.getLevel() > 4) M.map.setLevel(4);
       } catch (e) {}
     };
-    go();
-    setTimeout(go, 60);        /* 레이아웃이 끝난 뒤 한 번 더 — 타일이 잘리거나 중심이 어긋나는 것 방지 */
+    /* 목록에서 넘어올 때는 지도가 숨어 있던 동안 크기를 잃었으므로 레이아웃이 끝난 뒤에 옮긴다 */
+    if (window.requestAnimationFrame) window.requestAnimationFrame(jump);
+    else setTimeout(jump, 0);
+    setTimeout(function () {
+      if (!M.map || M.selKey !== key || !M.map.getCenter) return;
+      var c = null;
+      try { c = M.map.getCenter(); } catch (e) { return; }
+      if (!c) return;
+      if (Math.abs(c.getLat() - lat) < 5e-4 && Math.abs(c.getLng() - lng) < 5e-4) return;
+      try { M.map.relayout(); } catch (e) {}
+      setTimeout(jump, 60);
+    }, 600);
   }
 
   function showMapCard(it) {
@@ -1216,14 +1228,19 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       if (err) { M.failed = err; mapNote(err); return; }
       var kakao = window.kakao;
       var items = mappableItems();
+      /* 목록에서 [지도]를 눌러 들어온 경우에는 처음부터 그 중개사 자리에서 지도를 연다.
+         (방금 만든 지도는 panTo를 받지 못하는 경우가 있어 생성 시 중심으로 잡는다) */
+      var sel = M.selKey ? S.byKey[M.selKey] : null;
       var center = new kakao.maps.LatLng(35.8485, 128.5385);   // 죽전네거리 기준
       if (M.center) center = M.center;
+      else if (sel && hasLL(sel.lat, sel.lng)) center = new kakao.maps.LatLng(Number(sel.lat), Number(sel.lng));
       else if (items.length) center = new kakao.maps.LatLng(items[0].lat, items[0].lng);
-      M.map = new kakao.maps.Map($('map'), { center: center, level: 7 });
+      M.map = new kakao.maps.Map($('map'), { center: center, level: sel ? 4 : 7 });
       M.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
       M.ready = true;
       M.failed = '';
       renderMap();
+      if (sel) setTimeout(function () { focusMapPin(sel); }, 120);
     });
   }
 
