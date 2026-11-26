@@ -1,0 +1,22 @@
+{
+  "id": "/visit-check/",
+  "name": "죽전점 SR 방문관리 체크표",
+  "short_name": "방문체크",
+  "description": "하나은행 죽전점 SR 중개사 방문관리 체크표",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "/visit-check/",
+  "scope": "/visit-check/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#F3F6F5",
+  "theme_color": "#00453A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "prefer_related_applications": false
+}

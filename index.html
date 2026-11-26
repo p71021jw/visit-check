@@ -6,6 +6,15 @@
 <meta name="theme-color" content="#00453A">
 <meta name="color-scheme" content="light">
 <meta name="robots" content="noindex,nofollow">
+<!-- 홈 화면에 설치했을 때 주소창·하단 메뉴바 없이 앱처럼 뜨게 하는 설정 -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="방문체크">
+<meta name="application-name" content="방문체크">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>하나은행 방문관리 체크표</title>
 <style>
 :root{
@@ -24,7 +33,7 @@ body{
   overflow-x:hidden;
 }
 /* ── 상단 그린 헤더 ── */
-.hero{position:relative;overflow:hidden;color:#fff;padding:15px 18px 48px;
+.hero{position:relative;overflow:hidden;color:#fff;padding:calc(15px + env(safe-area-inset-top)) 18px 48px;
   background:linear-gradient(152deg,#00453A 0%,#006A57 56%,#0E9E86 100%)}
 .hero:after{content:"";position:absolute;right:-52px;top:-64px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07)}
 .hero:before{content:"";position:absolute;right:22px;top:74px;width:96px;height:96px;border-radius:50%;background:rgba(255,255,255,.05)}
@@ -1704,6 +1713,13 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   if (PASS) fetchBoard();
   else showLock('');
 })();
+
+/* 홈 화면 웹앱(standalone) 인식용 최소 서비스워커 등록 — 캐시 없이 네트워크 직통 */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () { /* 미지원·차단 시 조용히 무시 */ });
+  });
+}
 </script>
 </body>
 </html>
