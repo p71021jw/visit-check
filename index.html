@@ -121,29 +121,32 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .meta .tel-no{color:#00695A;font-weight:600;font-feature-settings:"tnum";letter-spacing:.01em}
 .meta .note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
   white-space:pre-line;color:#7C8E87;margin-top:1px}
-.vdate{display:inline-block;margin:6px 0 0;font-size:9.5px;font-weight:600;color:#0B7F6B;
-  background:var(--mint);border-radius:5px;padding:2px 6px;letter-spacing:.01em}
-.card.done .vdate{color:#2F6E5E;background:#DFF1E9}
-/* 방문일 알약 — 눌러서 수기 수정 (알약 모양·색은 위 .vdate 그대로) */
-.vdslot{display:block}
+.vdslot{display:block;margin:6px 0 0;min-width:0}
 .vdslot:empty{display:none}
-button.vdate{display:inline-flex;align-items:center;gap:3px;margin:6px 0 0;font-family:inherit;
-  font-size:9.5px;font-weight:600;line-height:1.35;color:#0B7F6B;
-  background:var(--mint);border:0;border-radius:5px;padding:2px 6px;letter-spacing:.01em;cursor:pointer}
-button.vdate .pen{font-size:9px;opacity:.7}
-button.vdate:active{background:#D8EDE5}
-.card.done button.vdate{color:#2F6E5E;background:#DFF1E9}
+/* 1차·2차·3차 알약은 모바일(344~390px)에서도 절대 두 줄로 떨어지지 않게 한 줄 고정 */
+.vdate-row{display:flex;flex-wrap:nowrap;align-items:center;gap:3px;min-width:0;max-width:100%;
+  overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch}
+.vdate-row::-webkit-scrollbar{display:none;width:0;height:0}
+button.vdate{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  white-space:nowrap;height:19px;font-family:inherit;font-size:10.5px;font-weight:600;line-height:1;
+  letter-spacing:-.02em;color:#0B7F6B;background:var(--mint);border:1px solid #CBE7DC;
+  border-radius:999px;padding:0 6px;cursor:pointer;font-feature-settings:"tnum"}
+.card.done button.vdate{color:#2F6E5E;background:#DFF1E9;border-color:#CFE7DC}
+button.vdate:active{background:#D3EBE2;transform:scale(.97)}
+button.vdate.add{color:#5E8077;background:#fff;border:1px dashed #BCD5CD;font-weight:700;padding:0 5px}
 /* 날짜 입력칸 — 모바일 날짜 선택기와 직접 입력이 모두 되도록 input[type=date] */
-.vdedit{display:flex;align-items:center;gap:5px;margin:6px 0 0;flex-wrap:nowrap}
-.vdate-inp{flex:1 1 auto;min-width:0;width:auto;height:32px;padding:0 6px;border:1px solid #BFDCD2;
+.vdedit{display:flex;align-items:center;gap:4px;margin:1px 0 0;flex-wrap:nowrap;min-width:0}
+.vdate-inp{flex:1 1 auto;min-width:0;width:auto;height:30px;padding:0 4px;border:1px solid #BFDCD2;
   border-radius:7px;background:#fff;font-family:inherit;font-size:12px;line-height:1.2;color:var(--ink);
   -webkit-appearance:auto;appearance:auto}
 .vdate-inp:focus{outline:none;border-color:#56B79B;box-shadow:0 0 0 3px rgba(21,171,141,.12)}
-.vbtn{flex:0 0 auto;height:32px;padding:0 9px;border-radius:7px;border:1px solid #CFE0DA;background:#fff;
-  font-family:inherit;font-size:11px;font-weight:700;color:#3F5A53;cursor:pointer}
+.vbtn{flex:0 0 auto;height:30px;padding:0 8px;border-radius:7px;border:1px solid #CFE0DA;background:#fff;
+  font-family:inherit;font-size:11px;font-weight:700;color:#3F5A53;cursor:pointer;white-space:nowrap}
 .vbtn.save{background:var(--hana-deep);border-color:var(--hana-deep);color:#fff}
+.vbtn.del{color:#A6402F;border-color:#E7D2CC;background:#FFFCFB}
 .vbtn:active{transform:scale(.97)}
-/* 지도 하단 카드의 방문일 — 카드가 좁으니 같은 알약을 한 줄 더 */
+/* 지도 하단 카드의 방문일 — 카드가 좁으니 위 여백만 조금 줄인다 */
 .mc-info .vdslot{margin:3px 0 0}
 .acts{display:flex;gap:6px;margin-top:9px}
 .btn{flex:1;height:37px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:10px;
@@ -477,6 +480,14 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     return m ? (m[2] + '/' + m[3] + m[4]).trim() : String(s || '');
   }
 
+  /** 방문일 알약용 짧은 날짜 — 올해면 '11.19', 다른 해면 '25.01.15' */
+  function shortDay(s) {
+    var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return String(s || '');
+    if (m[1] === String(new Date().getFullYear())) return m[2] + '.' + m[3];
+    return m[1].substr(2) + '.' + m[2] + '.' + m[3];
+  }
+
   /** 연락처 글자에서 실제 전화번호만 뽑는다(휴대폰 우선). */
   function telOf(raw) {
     var s = String(raw || '');
@@ -644,7 +655,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     } else if (method === 'saveMemo') {
       task = apiPost({ action: 'memo', sheetType: args[0], row: args[1], memo: args[2] });
     } else if (method === 'saveVisitDate') {
-      task = apiPost({ action: 'visitDate', sheetType: args[0], row: args[1], visitDate: args[2] });
+      task = apiPost({ action: 'visitDate', sheetType: args[0], row: args[1], visitDate: args[2], slot: args[3] });
     } else {
       if (onFail) onFail(new Error('알 수 없는 호출입니다: ' + method));
       return;
@@ -1388,21 +1399,53 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
      그때 카드의 방문일 알약을 누르면 그 자리에서 날짜를 골라 바로 고쳐 쓸 수 있다.
      (정기방문만 — 개별 일정의 날짜는 일정 날짜라 바꾸지 않는다) */
 
-  /** 방문일 알약 HTML — 정기방문에 방문일이 있을 때만 */
+  /** 방문일 자리 — 1차·2차·3차를 한 줄 알약으로, 끝에 새 방문일 추가(+) */
   function vdateHTML(it) {
-    if (!it || it.type !== 'regular' || !it.date) return '';
-    var label = esc((it.name || '') + ' 방문일 ' + it.date + ' 수정');
-    return '<button type="button" class="vdate" data-act="edit-date" title="방문일 수정" ' +
-      'aria-label="' + label + '">방문 ' + esc(it.date) +
-      ' <span class="pen" aria-hidden="true">✎</span></button>';
+    if (!it || it.type !== 'regular') return '';
+    var all = [it.date, it.date2, it.date3];
+    var html = '';
+    for (var i = 0; i < 3; i++) {
+      var v = String(all[i] || '');
+      if (!v) continue;
+      var n = i + 1;
+      html += '<button type="button" class="vdate" data-act="edit-date" data-slot="' + n + '"' +
+        ' title="' + (n + '차 방문일 ' + esc(v) + ' · 눌러서 수정·삭제') + '"' +
+        ' aria-label="' + esc((it.name || '') + ' ' + n + '차 방문일 ' + v + ' 수정') + '">' +
+        n + '차 ' + esc(shortDay(v)) + '</button>';
+    }
+    /* 완료된 곳이거나 남아 있는 방문일이 있으면 새 방문일을 바로 넣을 수 있게 + 를 붙인다 */
+    if (it.checked || html) {
+      html += '<button type="button" class="vdate add" data-act="add-date" title="방문일 추가(오늘)"' +
+        ' aria-label="' + esc((it.name || '') + ' 방문일 추가') + '">+</button>';
+    }
+    return html ? '<div class="vdate-row">' + html + '</div>' : '';
   }
 
-  /** 날짜 입력칸 + 저장·취소 (모바일에서 [input]을 누르면 날짜 선택기가 뜨다) */
-  function vdateEditHTML(it) {
-    return '<div class="vdedit" data-act="date-editor">' +
-      '<input class="vdate-inp" type="date" value="' + esc(it.date || '') + '" ' +
-        'aria-label="방문일" min="2010-01-01" max="2099-12-31">' +
+  /** 오늘 날짜 'YYYY-MM-DD' (기기 시간대 기준) */
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  /** 그 회차의 날짜 — slot 1·2·3, 'push'면 새로 넣을 기본값(오늘) */
+  function dateOfSlot(it, slot) {
+    if (!it) return '';
+    if (String(slot) === 'push') return todayStr();
+    return String([it.date, it.date2, it.date3][Number(slot) - 1] || '');
+  }
+
+  /** 날짜 입력칸 + 저장·삭제·취소 (삭제는 이미 날짜가 있는 회차에만) */
+  function vdateEditHTML(it, slot) {
+    var val = dateOfSlot(it, slot);
+    var isPush = String(slot) === 'push';
+    var del = (!isPush && val)
+      ? '<button type="button" class="vbtn del" data-act="date-del">삭제</button>' : '';
+    var who = isPush ? '추가할 방문일' : (slot + '차 방문일');
+    return '<div class="vdedit" data-act="date-editor" data-slot="' + slot + '">' +
+      '<input class="vdate-inp" type="date" value="' + esc(val) + '" ' +
+        'aria-label="' + esc(who) + '" min="2010-01-01" max="2099-12-31">' +
       '<button type="button" class="vbtn save" data-act="date-save">저장</button>' +
+      del +
       '<button type="button" class="vbtn cancel" data-act="date-cancel">취소</button>' +
     '</div>';
   }
@@ -1421,56 +1464,107 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     slot.innerHTML = vdateHTML(it);
   }
 
-  function openDateEditor(slot) {
-    if (!slot) return;
-    var it = dateItemOf(slot);
+  function openDateEditor(slotEl, slot) {
+    if (!slotEl) return;
+    var it = dateItemOf(slotEl);
     if (!it || it.type !== 'regular') return;
-    if (slot.querySelector('.vdedit')) {
-      var open = slot.querySelector('.vdate-inp');
-      if (open) { try { open.focus(); } catch (e) {} }
+    var open = slotEl.querySelector('.vdedit');
+    if (open && open.dataset.slot === String(slot)) {
+      var focus = slotEl.querySelector('.vdate-inp');
+      if (focus) { try { focus.focus(); } catch (e) {} }
       return;                                  /* 이미 열려 있으면 그 칸으로 커서만 */
     }
-    slot.innerHTML = vdateEditHTML(it);
-    var inp = slot.querySelector('.vdate-inp');
+    slotEl.innerHTML = vdateEditHTML(it, slot);
+    var inp = slotEl.querySelector('.vdate-inp');
     if (!inp) return;
     try { inp.focus({ preventScroll: true }); } catch (e) { try { inp.focus(); } catch (e2) {} }
     /* 방금 누른 흐름 안이라 안드로이드 크롬·삼성 인터넷은 날짜 선택기를 바로 띄울 수 있다.
-       지원하지 않거나 막히면 조용히 넘기고, 칸을 다시 누르면 선택기가 뜨다. */
+       지원하지 않거나 막히면 조용히 넘기고, 칸을 다시 누르면 선택기가 뜬다. */
     if (inp.showPicker) { try { inp.showPicker(); } catch (e) {} }
   }
 
-  function cancelDateEditor(slot) {
-    var it = dateItemOf(slot);
+  function cancelDateEditor(slotEl) {
+    var it = dateItemOf(slotEl);
     if (!it) return;
-    paintDateSlot(slot, it);                   /* 저장하던 값은 버리고 원래 날짜로 */
+    paintDateSlot(slotEl, it);                 /* 저장하던 값은 버리고 원래 알약으로 */
   }
 
-  function saveDateFromSlot(slot) {
-    var it = dateItemOf(slot);
-    if (!it || !slot) return;
-    var inp = slot.querySelector('.vdate-inp');
-    if (!inp) return;
+  /** 서버가 돌려준 1·2·3차를 항목에 반영 (응답에 있는 값만) */
+  function applyDates(it, res) {
+    if (!res || res.ok !== true) return;
+    if ('visitDate' in res) it.date = String(res.visitDate || '');
+    if ('visitDate2' in res) it.date2 = String(res.visitDate2 || '');
+    if ('visitDate3' in res) it.date3 = String(res.visitDate3 || '');
+  }
+
+  /** 화면만 먼저 — 새 날짜를 맨 뒤에 넣고 3개가 넘으면 가장 오래된 1차를 민다 */
+  function pushLocalDate(it, val) {
+    var arr = [it.date, it.date2, it.date3].filter(function (v) { return !!v; });
+    if (!(arr.length && arr[arr.length - 1] === val)) {
+      if (arr.length < 3) arr.push(val);
+      else arr = arr.slice(1).concat([val]);
+    }
+    it.date = arr[0] || ''; it.date2 = arr[1] || ''; it.date3 = arr[2] || '';
+  }
+
+  /** 화면만 먼저 — 그 회차(1·2·3)만 바꾸거나(값) 지운다(빈 문자열). 빈 자리는 당겨서 정리 */
+  function setSlotDate(it, n, val) {
+    var arr = [it.date, it.date2, it.date3];
+    while (arr.length < n) arr.push('');
+    arr[n - 1] = val;
+    arr = arr.filter(function (v) { return !!v; });
+    it.date = arr[0] || ''; it.date2 = arr[1] || ''; it.date3 = arr[2] || '';
+  }
+
+  /** 저장 — 그 회차 수정 / '+ 방문일'이면 slot='push'(오늘을 밀어내기로 추가) */
+  function saveDateFromSlot(slotEl) {
+    var it = dateItemOf(slotEl);
+    if (!it || !slotEl) return;
+    var ed = slotEl.querySelector('.vdedit');
+    var inp = slotEl.querySelector('.vdate-inp');
+    if (!ed || !inp) return;
+    var slot = String(ed.dataset.slot || '1');
+    var isPush = (slot === 'push');
     var val = String(inp.value || '').trim();
+    if (!val && isPush) val = todayStr();      /* + 는 오늘 날짜가 기본값 */
     if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) { toast('날짜를 골라 주세요 (YYYY-MM-DD)'); return; }
+    if (!isPush && val === dateOfSlot(it, slot)) { paintDateSlot(slotEl, it); return; }  /* 바뀐 게 없음 */
 
-    var before = it.date || '';
-    if (val === before) { paintDateSlot(slot, it); return; }     /* 바뀐 게 없으면 그냥 되돌린다 */
+    sendDates(slotEl, it, val, isPush ? 'push' : Number(slot));
+  }
 
+  /** 삭제 — 그 회차만 지운다(남은 날짜는 앞으로 당겨 1차·2차로 채운다) */
+  function deleteDateFromSlot(slotEl) {
+    var it = dateItemOf(slotEl);
+    if (!it || !slotEl) return;
+    var ed = slotEl.querySelector('.vdedit');
+    if (!ed) return;
+    var n = Number(ed.dataset.slot);
+    if (!(n >= 1 && n <= 3)) return;
+    if (!dateOfSlot(it, n)) { paintDateSlot(slotEl, it); return; }
+    sendDates(slotEl, it, '', n, n + '차 방문일을 지웠습니다');
+  }
+
+  /** saveVisitDate 호출 공통 — 화면 먼저 반영, 실패하면 원래대로 되돌린다 */
+  function sendDates(slotEl, it, val, slot, doneMsg) {
     var key = 'date:' + keyOf(it);
     if (inFlight[key]) return;
     inFlight[key] = true;
 
-    /* 낙관적 반영 — 화면 배지는 바로 새 날짜 */
-    it.date = val;
-    paintDateSlot(slot, it);
+    var before = [it.date, it.date2, it.date3];
+    if (slot === 'push') pushLocalDate(it, val);
+    else setSlotDate(it, slot, val);
+    paintDateSlot(slotEl, it);
+    refreshDateSlots(it);
     setStatus('busy');
 
-    srv('saveVisitDate', [it.type, it.row, val], function (res) {
+    srv('saveVisitDate', [it.type, it.row, val, slot], function (res) {
       inFlight[key] = false;
       if (!res || res.ok !== true) { revert(res); return; }
-      it.date = res.visitDate || val;
+      applyDates(it, res);
       refreshDateSlots(it);
       setStatus('saved', res.savedAt || '');
+      if (doneMsg) toast(doneMsg);
       if (window.navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
     }, function () {
       inFlight[key] = false;
@@ -1478,7 +1572,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     });
 
     function revert(res) {
-      it.date = before;
+      it.date = before[0]; it.date2 = before[1]; it.date3 = before[2];
       refreshDateSlots(it);
       setStatus('failed');
       var msg = (res && res.error) ? String(res.error) : '';
@@ -1505,13 +1599,17 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     }
   }
 
-  /** 방문일 알약·입력칸 클릭 처리 (목록·지도 카드 공통). 처리했으면 true */
+  /** 방문일 알약·+·입력칸 클릭 처리 (목록·지도 카드 공통). 처리했으면 true */
   function onDateAreaClick(ev) {
     var t = ev.target;
+    var add = t.closest('[data-act="add-date"]');
+    if (add) { ev.preventDefault(); openDateEditor(add.closest('.vdslot'), 'push'); return true; }
     var edit = t.closest('[data-act="edit-date"]');
-    if (edit) { ev.preventDefault(); openDateEditor(edit.closest('.vdslot')); return true; }
+    if (edit) { ev.preventDefault(); openDateEditor(edit.closest('.vdslot'), edit.dataset.slot || '1'); return true; }
     var save = t.closest('[data-act="date-save"]');
     if (save) { ev.preventDefault(); saveDateFromSlot(save.closest('.vdslot')); return true; }
+    var del = t.closest('[data-act="date-del"]');
+    if (del) { ev.preventDefault(); deleteDateFromSlot(del.closest('.vdslot')); return true; }
     var cancel = t.closest('[data-act="date-cancel"]');
     if (cancel) { ev.preventDefault(); cancelDateEditor(cancel.closest('.vdslot')); return true; }
     /* 날짜 입력칸 안을 누른 것은 완료 체크가 아니라 날짜 고르기로 */
@@ -1551,9 +1649,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       card.classList.remove('pending');
       if (!res || res.ok !== true) { rollback(); return; }
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
-      /* 정기방문은 체크를 풀면 시트의 방문일도 지워지므로 화면의 '방문 날짜'도 바로 비운다.
-         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
-      if (it.type === 'regular') it.date = res.visitDate || (it.checked ? it.date : '');
+      /* 정기방문은 체크할 때 오늘 날짜가 3칸 규칙(밀어내기)으로 들어오고,
+         체크를 풀어도 방문일 이력은 남는다. (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+      if (it.type === 'regular') applyDates(it, res);
       applyCard(card, it);
       updateSummary();
       syncMapItem(it);
@@ -1631,6 +1729,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     it.draft = undefined;
     if (typeof it.checked !== 'boolean') it.checked = (it.checked === true);
     if (!it.memo) it.memo = '';
+    if (!it.date) it.date = '';
+    if (!it.date2) it.date2 = '';
+    if (!it.date3) it.date3 = '';
     if (it.lat === undefined) it.lat = null;
     if (it.lng === undefined) it.lng = null;
     return it;
@@ -1841,9 +1942,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       btn.disabled = false;
       if (!res || res.ok !== true) { rollback(); return; }
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
-      /* 정기방문은 체크를 풀면 시트의 방문일도 지워지므로 화면의 '방문 날짜'도 바로 비운다.
-         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
-      if (it.type === 'regular') it.date = res.visitDate || (it.checked ? it.date : '');
+      /* 정기방문은 체크할 때 오늘 날짜가 3칸 규칙(밀어내기)으로 들어오고,
+         체크를 풀어도 방문일 이력은 남는다. (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+      if (it.type === 'regular') applyDates(it, res);
       showMapCard(it);
       renderMapPinsOnly();
       updateSummary();
