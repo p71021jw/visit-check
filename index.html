@@ -117,6 +117,12 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .chip{flex:0 0 auto;font-size:9.5px;font-weight:700;line-height:1.25;color:var(--amber);
   background:#FBF2E1;border:1px solid #F0E2C6;border-radius:5px;padding:2px 5px}
 .chip.date{color:#0B7F6B;background:var(--mint);border-color:#CBE7DC}
+/* 중개사 상호 — 누르면 잔금 이력이 뜬다(점선 밑줄로만 살짝 알린다) */
+.nm{font:inherit;color:inherit;letter-spacing:inherit;background:none;border:0;margin:0;padding:0;
+  cursor:pointer;text-align:left;border-bottom:1px dotted rgba(0,128,107,.5);
+  -webkit-tap-highlight-color:transparent}
+.nm:active{opacity:.55}
+.card.done .nm{border-bottom-color:rgba(61,122,107,.42)}
 .meta{margin:0;font-size:10.5px;line-height:1.55;color:var(--sub)}
 .meta span{display:block}
 .meta .wk{color:#3F5A53;font-weight:600}
@@ -240,6 +246,39 @@ body.mc-open #map{height:calc(100vh - 503px);height:calc(100dvh - 503px);min-hei
   .mc-acts{gap:4px}
   .mc-acts .btn{font-size:10.5px;padding:0 2px;gap:3px}
   .mc-acts .btn .ico{width:12px;height:12px}
+}
+/* 지도 카드의 상호도 같은 점선 밑줄 */
+.mc-info h3 .nm{font-size:inherit;font-weight:inherit;line-height:inherit}
+/* ── 잔금 이력 팝업 ── */
+.histwrap{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+.histwrap[hidden]{display:none}
+.histbg{position:absolute;inset:0;background:rgba(6,32,27,.42)}
+.hist{position:relative;width:100%;max-width:520px;max-height:82vh;display:flex;flex-direction:column;
+  background:#fff;border-radius:18px 18px 0 0;box-shadow:0 -12px 34px rgba(0,0,0,.26);
+  padding:13px 14px calc(12px + env(safe-area-inset-bottom));animation:histup .2s ease-out}
+@keyframes histup{from{transform:translateY(16px);opacity:.55}to{transform:none;opacity:1}}
+.hist-head{display:flex;align-items:flex-start;gap:8px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.hist-head .hh{min-width:0;flex:1}
+.hist-head h3{margin:0;font-size:15.5px;font-weight:800;line-height:1.3;letter-spacing:-.02em;
+  color:var(--ink);word-break:break-all}
+.hist-sub{margin:3px 0 0;font-size:10.5px;line-height:1.5;color:var(--sub);font-feature-settings:"tnum"}
+.hist-sub b{color:#00695A}
+.hist-x{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:9px;background:#EEF3F1;color:#5E726B;
+  font:inherit;font-size:13px;line-height:1;cursor:pointer;padding:0}
+.hist-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:1px 0 0}
+.hist-row{display:grid;grid-template-columns:74px 1fr auto;gap:1px 8px;align-items:baseline;
+  padding:8px 2px;border-bottom:1px solid #F1F6F4}
+.hist-row:last-child{border-bottom:0}
+.hist-row .hd{font-size:10.5px;font-weight:700;color:#4C635C;font-feature-settings:"tnum"}
+.hist-row .hc{min-width:0;font-size:11.5px;font-weight:600;color:var(--ink);word-break:break-all}
+.hist-row .hm{font-size:11.5px;font-weight:800;color:#0B5B4E;white-space:nowrap;font-feature-settings:"tnum"}
+.hist-row .hn{grid-column:1 / -1;font-size:10px;line-height:1.45;color:#87968F;word-break:break-all}
+.hist-empty{padding:26px 8px;text-align:center;font-size:12px;line-height:1.65;color:#7C8E87}
+body.hist-open{overflow:hidden}
+/* 폴드 펼침·태블릿처럼 넓을 때는 아래에 붙이지 않고 화면 가운데에 띄운다 */
+@media (min-width:600px){
+  .histwrap{align-items:center;padding:24px}
+  .hist{border-radius:18px;max-height:76vh;padding-bottom:12px}
 }
 /* ── 하단 저장 바 ── */
 .savebar{position:fixed;bottom:0;left:0;right:0;z-index:8;max-width:760px;margin:0 auto;
@@ -372,7 +411,7 @@ body.mc-open #map{height:calc(100vh - 503px);height:calc(100dvh - 503px);min-hei
     <div class="mc-top">
       <span class="mc-no" id="mc-no">1</span>
       <div class="mc-info">
-        <h3 id="mc-name">중개사명</h3>
+        <h3><button class="nm" id="mc-name" type="button" data-act="hist" aria-label="잔금 이력 보기">중개사명</button></h3>
         <p id="mc-sub">주소</p>
         <span class="vdslot" id="mc-vdslot"></span>
       </div>
@@ -384,6 +423,20 @@ body.mc-open #map{height:calc(100vh - 503px);height:calc(100dvh - 503px);min-hei
       <a class="btn map tmap" id="mc-tmap" href="#" rel="noopener" aria-label="티맵으로 길찾기">티맵</a>
       <a class="btn map kakao" id="mc-route" href="#" rel="noopener" aria-label="카카오맵으로 길찾기">카카오</a>
     </div>
+  </div>
+</div>
+
+<div class="histwrap" id="histwrap" hidden>
+  <div class="histbg" id="hist-bg"></div>
+  <div class="hist" role="dialog" aria-modal="true" aria-labelledby="hist-title">
+    <div class="hist-head">
+      <div class="hh">
+        <h3 id="hist-title">중개사명</h3>
+        <p class="hist-sub" id="hist-sub"></p>
+      </div>
+      <button class="hist-x" id="hist-x" type="button" aria-label="잔금 이력 닫기">✕</button>
+    </div>
+    <div class="hist-body" id="hist-body"></div>
   </div>
 </div>
 
@@ -673,10 +726,17 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     try { return JSON.parse(text); } catch (e) { return null; }
   }
 
-  /* 조회: GET  ${EXEC_URL}?api=1&action=board&pass=… */
-  function apiGet(action) {
+  /* 조회: GET  ${EXEC_URL}?api=1&action=board&pass=…   (?action=history&name=중개사명) */
+  function apiGet(action, extra) {
     var url = EXEC_URL + '?api=1&action=' + encodeURIComponent(action) +
               '&pass=' + encodeURIComponent(PASS) + '&t=' + Date.now();
+    if (extra) {
+      Object.keys(extra).forEach(function (k) {
+        var v = extra[k];
+        if (v === undefined || v === null) return;
+        url += '&' + encodeURIComponent(k) + '=' + encodeURIComponent(v);
+      });
+    }
     return fetch(url, { method: 'GET', cache: 'no-store', redirect: 'follow' })
       .then(function (r) { return r.text(); })
       .then(function (text) {
@@ -709,6 +769,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var task;
     if (method === 'getBoardData') {
       task = apiGet('board');
+    } else if (method === 'getHistory') {
+      task = apiGet('history', { name: args[0] });
     } else if (method === 'toggleCheck') {
       task = apiPost({ action: 'toggle', sheetType: args[0], row: args[1], checked: args[2] });
     } else if (method === 'saveMemo') {
@@ -779,6 +841,99 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       btn.textContent = '들어가기';
       if (ok) $('lock').hidden = true;
     });
+  }
+
+  /* ── 잔금 이력 팝업 ────────────────────────────────
+     중개사 상호를 누르면 그 중개사의 잔금 실행 이력을 최신순으로 보여 준다.
+     데이터는 시트 '잔금_이력' 탭(API action=history)에서 가져오고, 한 번 받은 것은
+     이 화면이 살아 있는 동안만 기억해 둔다(같은 곳을 다시 눌러도 기다리지 않게). */
+  var HIST = { cache: {}, key: '', req: 0 };
+
+  /** 만원 단위 숫자 → '163억 8,640만원' */
+  function wonText(v) {
+    var n = Math.round(Number(v) || 0);
+    var neg = n < 0;
+    n = Math.abs(n);
+    var eok = Math.floor(n / 10000), man = n % 10000;
+    var s = '';
+    if (eok) s += eok.toLocaleString('ko-KR') + '억';
+    if (man) s += (s ? ' ' : '') + man.toLocaleString('ko-KR') + '만';
+    return (neg ? '-' : '') + (s || '0') + '원';
+  }
+
+  /** 만원 단위 숫자 → 거래 한 줄에 쓰는 짧은 표기 ('12,000만') */
+  function manText(v) {
+    var n = Number(v);
+    if (!isFinite(n)) return '—';
+    return Math.round(n).toLocaleString('ko-KR') + '만';
+  }
+
+  function openHistory(name) {
+    var nm = String(name || '').trim();
+    if (!nm) return;
+    HIST.key = nm;
+    $('hist-title').textContent = nm;
+    $('hist-sub').textContent = '';
+    $('hist-body').innerHTML = '<div class="hist-empty">불러오는 중…</div>';
+    $('histwrap').hidden = false;
+    document.body.classList.add('hist-open');
+
+    var cached = HIST.cache[nm];
+    if (cached) { paintHistory(cached); return; }
+
+    var req = ++HIST.req;
+    srv('getHistory', [nm], function (res) {
+      if (req !== HIST.req || HIST.key !== nm) return;      /* 그 사이 다른 곳을 눌렀다 */
+      if (res && res.code === 'auth') { lockOut(res.error || '비밀번호가 다시 필요합니다'); return; }
+      if (!res || res.ok !== true) {
+        var msg = (res && res.error) ? String(res.error) : '';
+        $('hist-body').innerHTML = (!res || /알 수 없는 요청/.test(msg))
+          ? '<div class="hist-empty">Code.gs 새 버전 배포 후 조회됩니다.<br>배포가 끝나면 새로고침해 주세요.</div>'
+          : '<div class="hist-empty">' + esc(msg || '이력을 불러오지 못했습니다') + '</div>';
+        return;
+      }
+      HIST.cache[nm] = res;
+      paintHistory(res);
+    }, function (err) {
+      if (req !== HIST.req || HIST.key !== nm) return;
+      $('hist-body').innerHTML = '<div class="hist-empty">이력을 불러오지 못했습니다.<br>' +
+        esc((err && err.message) || '연결을 확인해 주세요') + '</div>';
+    });
+  }
+
+  function paintHistory(res) {
+    var items = (res && res.items) || [];
+    var count = Number(res && res.count) || items.length;
+    if (!count) {
+      $('hist-sub').textContent = '';
+      $('hist-body').innerHTML = '<div class="hist-empty">잔금 거래 이력이 없습니다.<br>' +
+        '장부(2011~2026 잔금)에 이 중개사 이름으로 남은 기록이 없습니다.</div>';
+      return;
+    }
+    var sub = ['총 <b>' + count.toLocaleString('ko-KR') + '건</b>'];
+    sub.push('총 <b>' + wonText(res.totalManwon) + '</b>');
+    if (res.latest) sub.push('최근 <b>' + esc(res.latest) + '</b>');
+    $('hist-sub').innerHTML = sub.join(' · ');
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i] || {};
+      var hasAmt = it.amount !== null && it.amount !== undefined && it.amount !== '';
+      html += '<div class="hist-row">' +
+        '<span class="hd">' + esc(it.date || '') + '</span>' +
+        '<span class="hc">' + esc(it.customer || '') + '</span>' +
+        '<span class="hm">' + (hasAmt ? esc(manText(it.amount)) : '—') + '</span>' +
+        (it.note ? '<span class="hn">' + esc(it.note) + '</span>' : '') +
+      '</div>';
+    }
+    $('hist-body').innerHTML = html;
+    $('hist-body').scrollTop = 0;
+  }
+
+  function closeHistory() {
+    $('histwrap').hidden = true;
+    document.body.classList.remove('hist-open');
+    HIST.key = '';
   }
 
   /* ── 집계 ─────────────────────────────────────────── */
@@ -894,7 +1049,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
     if (it.type === 'regular') {
       var seq = seqOf(it);
-      head = (seq ? '<span class="seq">' + esc(seq) + '</span>' : '') + esc(it.name) +
+      head = (seq ? '<span class="seq">' + esc(seq) + '</span>' : '') +
+        '<button class="nm" type="button" data-act="hist" aria-label="' + esc(it.name) + ' 잔금 이력 보기">' +
+          esc(it.name) + '</button>' +
         (it.grade ? '<span class="chip">' + esc(it.grade) + '</span>' : '');
       var line1 = [it.week, it.course].filter(Boolean).join(' · ');
       if (line1) metas.push('<span class="wk">' + esc(line1) + '</span>');
@@ -1362,6 +1519,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     document.body.classList.add('mc-open');
     $('mc-no').textContent = seqOf(it) || it.no || '';
     $('mc-name').textContent = it.name || '';
+    $('mc-name').setAttribute('aria-label', (it.name || '') + ' 잔금 이력 보기');
     var sub = [];
     if (it.course) sub.push(it.course);
     if (it.addr && it.addr.indexOf('미확인') < 0) sub.push(it.addr);
@@ -1888,6 +2046,15 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   /* ── 이벤트 ───────────────────────────────────────── */
   $('list').addEventListener('click', function (ev) {
+    /* 중개사 상호 → 잔금 이력 팝업 (완료 체크보다 먼저 처리: 이름이 카드 윗줄 안에 있다) */
+    var nmBtn = ev.target.closest('[data-act="hist"]');
+    if (nmBtn && $('list').contains(nmBtn)) {
+      ev.preventDefault();
+      var hcard = nmBtn.closest('.card');
+      var hit = hcard ? S.byKey[hcard.dataset.key] : null;
+      openHistory((hit && hit.name) || nmBtn.textContent);
+      return;
+    }
     /* 방문일 알약 → 날짜 입력칸 / 저장 / 취소 (완료 체크와 겹치지 않게 먼저 처리) */
     if (onDateAreaClick(ev)) return;
     /* 카드의 [지도] — 앱 안 지도 탭으로 전환해 그 중개사 핀으로 확대·이동 */
@@ -1987,6 +2154,19 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   });
 
   $('mapcard').addEventListener('click', onDateAreaClick);
+  $('mapcard').addEventListener('click', function (ev) {
+    /* 지도 카드의 중개사 상호 → 잔금 이력 팝업 */
+    var nmBtn = ev.target.closest('[data-act="hist"]');
+    if (!nmBtn) return;
+    ev.preventDefault();
+    var hit = M.selKey ? S.byKey[M.selKey] : null;
+    openHistory((hit && hit.name) || nmBtn.textContent);
+  });
+  $('hist-x').addEventListener('click', closeHistory);
+  $('hist-bg').addEventListener('click', closeHistory);
+  document.addEventListener('keydown', function (ev) {
+    if ((ev.key === 'Escape' || ev.key === 'Esc') && !$('histwrap').hidden) closeHistory();
+  });
   $('mapcard').addEventListener('keydown', onDateAreaKey);
 
   /* 지도 하단 카드 */
