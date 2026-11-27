@@ -107,8 +107,10 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .card.done .check{background:linear-gradient(145deg,#14AB8D,#00796A);border-color:#00796A;box-shadow:0 4px 10px rgba(0,121,106,.22)}
 .card.done .check svg{opacity:1;transform:scale(1)}
 .info{min-width:0;flex:1;padding-top:1px}
-.seq{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:19px;padding:0 5px;margin-right:2px;
-  border-radius:6px;background:#EEF4F1;color:#38675B;font-size:10.5px;font-weight:800;font-feature-settings:"tnum"}
+.seq{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:21px;padding:0 6px;margin-right:4px;
+  border-radius:6px;background:#DCEEE7;border:1px solid #B7D9CD;color:#0E4E43;
+  font-size:11.5px;font-weight:800;line-height:1;letter-spacing:.01em;font-feature-settings:"tnum"}
+.card.done .seq{background:#fff;border-color:#9FD3C1;color:#0B5B4E}
 .name{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 4px;font-size:15px;font-weight:700;
   line-height:1.3;letter-spacing:-.02em;color:var(--ink)}
 .card.done .name{color:#3D7A6B}
@@ -435,6 +437,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     ind: [],
     byKey: {},
     seqByKey: {},
+    allSeqByKey: {},
     fetchedAt: '',
     summary: null
   };
@@ -823,12 +826,16 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     return scopeItems().filter(function (it) { return it.type === 'regular' && it.lat && it.lng; });
   }
 
-  /** 주차 안에서의 동선 순번 (시트 행 순서 = 방문 순서) */
+  /** 전체 탭은 정기방문 통번호(1~136), 주차 탭은 그 주차 안 동선 순번 (시트 행 순서 = 방문 순서) */
   function seqOf(it) {
+    if (S.tab === '전체') return S.allSeqByKey[keyOf(it)] || '';
     return S.seqByKey[keyOf(it)] || '';
   }
 
   function buildSeq() {
+    /* 전체 탭 통번호 — 정기방문 전체 목록(S.reg, 시트 행 순서) 기준 1..N */
+    S.allSeqByKey = {};
+    S.reg.forEach(function (it, i) { S.allSeqByKey[keyOf(it)] = String(i + 1); });
     S.seqByKey = {};
     var weeks = {};
     S.reg.forEach(function (it) {
