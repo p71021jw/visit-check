@@ -907,6 +907,20 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     updateSummary();
   }
 
+  /* 목록에서 특정 중개사 카드를 화면 가운데로 — 지도에서 보던 곳에서 목록으로 돌아올 때 쓴다.
+     해당 카드가 없으면(다른 탭·검색으로 빠진 항목) false 를 돌려준다. */
+  function scrollListToKey(key) {
+    if (!key) return false;
+    var cards = $('list').querySelectorAll('.card'), el = null;
+    for (var i = 0; i < cards.length; i++) {
+      if (cards[i].dataset.key === key) { el = cards[i]; break; }
+    }
+    if (!el) return false;
+    try { el.scrollIntoView({ block: 'center', behavior: 'instant' }); }
+    catch (e) { el.scrollIntoView({ block: 'center' }); }
+    return true;
+  }
+
   /* ── 카카오맵 ─────────────────────────────────────── */
   function loadKakao(cb) {
     if (window.kakao && window.kakao.maps) { cb(''); return; }
@@ -1561,8 +1575,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var tab = ev.target.closest('.tab');
     if (!tab) return;
     flushAll();
+    var prevTab = S.tab;
     S.tab = tab.dataset.tab;
-    if (S.tab === '개별' && S.view === 'map') closeMapCard();
+    /* 탭이 바뀌면 앞 탭에서 열어 둔 지도 하단 카드를 닫는다 — 새 탭 화면에 남지 않게.
+       (개별 탭으로 갈 때뿐 아니라 전체↔1~4주차 어디로 옮겨도 동일하게 적용) */
+    if (S.tab !== prevTab) closeMapCard();
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
@@ -1573,13 +1590,20 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var v = b.dataset.view;
     if (v === S.view) return;
     flushAll();
+    /* 목록으로 돌아갈 때는 '지도에서 보던 중개사'를 먼저 기억해 두었다가 그 카드로 바로 맞춘다
+       (목록에서 [지도]로 넘어간 경우든, 지도에서 다른 핀을 눌러 본 경우든) */
+    var backKey = (v === 'list') ? M.selKey : '';
     S.view = v;
     Array.prototype.forEach.call(document.querySelectorAll('#viewtog .vt'), function (x) {
       x.classList.toggle('on', x.dataset.view === v);
     });
-    /* 목록으로 넘어가면 지도 하단 카드도 함께 닫는다 */
+    /* 목록으로 넘어가면 지도 하단 카드도 함께 닫는다 — 닫으면서 M.selKey 가 비므로 그 전에 기억 */
     if (v === 'list') closeMapCard();
     render();
+    if (v === 'list') {
+      /* 고른 핀이 있었으면 그 중개사 카드를 화면 가운데로, 없었으면 예전처럼 맨 위로 */
+      if (!scrollListToKey(backKey)) window.scrollTo(0, 0);
+    }
     if (v === 'map') {
       /* 숨어 있던 동안 잃은 크기를 되찾아 타일이 잘리지 않게 한다 */
       if (M.ready && M.map) {
