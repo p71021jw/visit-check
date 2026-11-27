@@ -274,6 +274,7 @@ body.mc-open #map{height:calc(100vh - 503px);height:calc(100dvh - 503px);min-hei
 .hist-row .hm{font-size:11.5px;font-weight:800;color:#0B5B4E;white-space:nowrap;font-feature-settings:"tnum"}
 .hist-row .hn{grid-column:1 / -1;font-size:10px;line-height:1.45;color:#87968F;word-break:break-all}
 .hist-empty{padding:26px 8px;text-align:center;font-size:12px;line-height:1.65;color:#7C8E87}
+.hist-src{color:#8A9C95;font-size:10px}
 body.hist-open{overflow:hidden}
 /* 폴드 펼침·태블릿처럼 넓을 때는 아래에 붙이지 않고 화면 가운데에 띄운다 */
 @media (min-width:600px){
@@ -914,6 +915,14 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     sub.push('총 <b>' + wonText(res.totalManwon) + '</b>');
     if (res.latest) sub.push('최근 <b>' + esc(res.latest) + '</b>');
     $('hist-sub').innerHTML = sub.join(' · ');
+    /* 장부에 다른 상호로 남아 있는 거래를 합쳐 보여 줄 때는 그 이름을 밝힌다 */
+    var src = [];
+    (res.sources || []).forEach(function (s) {
+      if (s && s !== res.name && src.indexOf(s) < 0) src.push(s);
+    });
+    if (src.length) {
+      $('hist-sub').innerHTML += '<br><span class="hist-src">장부 표기: ' + esc(src.join(' · ')) + '</span>';
+    }
 
     var html = '';
     for (var i = 0; i < items.length; i++) {
