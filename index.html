@@ -124,6 +124,27 @@ h1{position:relative;margin:13px 0 4px;font-size:23px;font-weight:800;letter-spa
 .vdate{display:inline-block;margin:6px 0 0;font-size:9.5px;font-weight:600;color:#0B7F6B;
   background:var(--mint);border-radius:5px;padding:2px 6px;letter-spacing:.01em}
 .card.done .vdate{color:#2F6E5E;background:#DFF1E9}
+/* 방문일 알약 — 눌러서 수기 수정 (알약 모양·색은 위 .vdate 그대로) */
+.vdslot{display:block}
+.vdslot:empty{display:none}
+button.vdate{display:inline-flex;align-items:center;gap:3px;margin:6px 0 0;font-family:inherit;
+  font-size:9.5px;font-weight:600;line-height:1.35;color:#0B7F6B;
+  background:var(--mint);border:0;border-radius:5px;padding:2px 6px;letter-spacing:.01em;cursor:pointer}
+button.vdate .pen{font-size:9px;opacity:.7}
+button.vdate:active{background:#D8EDE5}
+.card.done button.vdate{color:#2F6E5E;background:#DFF1E9}
+/* 날짜 입력칸 — 모바일 날짜 선택기와 직접 입력이 모두 되도록 input[type=date] */
+.vdedit{display:flex;align-items:center;gap:5px;margin:6px 0 0;flex-wrap:nowrap}
+.vdate-inp{flex:1 1 auto;min-width:0;width:auto;height:32px;padding:0 6px;border:1px solid #BFDCD2;
+  border-radius:7px;background:#fff;font-family:inherit;font-size:12px;line-height:1.2;color:var(--ink);
+  -webkit-appearance:auto;appearance:auto}
+.vdate-inp:focus{outline:none;border-color:#56B79B;box-shadow:0 0 0 3px rgba(21,171,141,.12)}
+.vbtn{flex:0 0 auto;height:32px;padding:0 9px;border-radius:7px;border:1px solid #CFE0DA;background:#fff;
+  font-family:inherit;font-size:11px;font-weight:700;color:#3F5A53;cursor:pointer}
+.vbtn.save{background:var(--hana-deep);border-color:var(--hana-deep);color:#fff}
+.vbtn:active{transform:scale(.97)}
+/* 지도 하단 카드의 방문일 — 카드가 좁으니 같은 알약을 한 줄 더 */
+.mc-info .vdslot{margin:3px 0 0}
 .acts{display:flex;gap:6px;margin-top:9px}
 .btn{flex:1;height:37px;display:flex;align-items:center;justify-content:center;gap:5px;border-radius:10px;
   border:1px solid #D6E4DF;background:#fff;color:#2C544A;font-size:11.5px;font-weight:600;text-decoration:none}
@@ -336,6 +357,7 @@ body.mc-open #map{height:calc(100vh - 503px);height:calc(100dvh - 503px);min-hei
       <div class="mc-info">
         <h3 id="mc-name">중개사명</h3>
         <p id="mc-sub">주소</p>
+        <span class="vdslot" id="mc-vdslot"></span>
       </div>
       <button class="mc-x" id="mc-x" type="button" aria-label="카드 닫기">✕</button>
     </div>
@@ -621,6 +643,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       task = apiPost({ action: 'toggle', sheetType: args[0], row: args[1], checked: args[2] });
     } else if (method === 'saveMemo') {
       task = apiPost({ action: 'memo', sheetType: args[0], row: args[1], memo: args[2] });
+    } else if (method === 'saveVisitDate') {
+      task = apiPost({ action: 'visitDate', sheetType: args[0], row: args[1], visitDate: args[2] });
     } else {
       if (onFail) onFail(new Error('알 수 없는 호출입니다: ' + method));
       return;
@@ -828,8 +852,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
           ? '<span class="btn tel off">' + ICON_PHONE + '번호 미확인</span>'
           : '');
 
-    var vdate = (it.type === 'regular' && it.date)
-      ? '<span class="vdate">방문 ' + esc(it.date) + '</span>' : '';
+    var vdate = (it.type === 'regular')
+      ? '<div class="vdslot">' + vdateHTML(it) + '</div>' : '';
 
     /* 좌표가 있는 정기방문이면 [지도]는 외부 카카오맵 앱으로 나가지 않고
        앱 안 지도 탭의 그 핀으로 넘어간다(data-act="inappmap").
@@ -1269,6 +1293,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (it.addr && it.addr.indexOf('미확인') < 0) sub.push(it.addr);
     else if (it.addr) sub.push('소재지 미확인');
     $('mc-sub').textContent = sub.join(' · ');
+    /* 방문일 알약도 같이 — 지도에서 완료 체크한 뒤에도 이 자리에서 날짜를 고칠 수 있게 */
+    paintDateSlot($('mapcard').querySelector('.vdslot'), it);
 
     var info = telInfo(it.tel);
     var telA = $('mc-tel');
@@ -1352,21 +1378,155 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var btn = card.querySelector('.check');
     if (btn) btn.setAttribute('aria-checked', String(!!it.checked));
     if (it.type === 'regular') {
-      var holder = card.querySelector('.info');
-      if (holder) {
-        var old = holder.querySelector('.vdate');
-        if (it.date) {
-          if (old) { old.textContent = '방문 ' + it.date; }
-          else {
-            var el = document.createElement('span');
-            el.className = 'vdate';
-            el.textContent = '방문 ' + it.date;
-            holder.appendChild(el);
-          }
-        } else if (old) {
-          old.parentNode.removeChild(old);
-        }
+      /* 방문일 알약은 render 할 때와 같은 규칙으로 다시 그린다(날짜가 비면 알약도 사라짐) */
+      paintDateSlot(card.querySelector('.vdslot'), it);
+    }
+  }
+
+  /* ── 방문일 수기 수정 ─────────────────────────────── */
+  /* 실수로 체크를 풀었다가 다시 체크하면 시트 K열 방문일이 '오늘'로 새로 찍힌다.
+     그때 카드의 방문일 알약을 누르면 그 자리에서 날짜를 골라 바로 고쳐 쓸 수 있다.
+     (정기방문만 — 개별 일정의 날짜는 일정 날짜라 바꾸지 않는다) */
+
+  /** 방문일 알약 HTML — 정기방문에 방문일이 있을 때만 */
+  function vdateHTML(it) {
+    if (!it || it.type !== 'regular' || !it.date) return '';
+    var label = esc((it.name || '') + ' 방문일 ' + it.date + ' 수정');
+    return '<button type="button" class="vdate" data-act="edit-date" title="방문일 수정" ' +
+      'aria-label="' + label + '">방문 ' + esc(it.date) +
+      ' <span class="pen" aria-hidden="true">✎</span></button>';
+  }
+
+  /** 날짜 입력칸 + 저장·취소 (모바일에서 [input]을 누르면 날짜 선택기가 뜨다) */
+  function vdateEditHTML(it) {
+    return '<div class="vdedit" data-act="date-editor">' +
+      '<input class="vdate-inp" type="date" value="' + esc(it.date || '') + '" ' +
+        'aria-label="방문일" min="2010-01-01" max="2099-12-31">' +
+      '<button type="button" class="vbtn save" data-act="date-save">저장</button>' +
+      '<button type="button" class="vbtn cancel" data-act="date-cancel">취소</button>' +
+    '</div>';
+  }
+
+  /** 알약·입력칸이 속한 항목 — 목록 카드(.card) 또는 지도 하단 카드(#mapcard) */
+  function dateItemOf(slot) {
+    if (!slot) return null;
+    var card = slot.closest ? slot.closest('.card') : null;
+    if (card && card.dataset && card.dataset.key) return S.byKey[card.dataset.key] || null;
+    if (M.selKey) return S.byKey[M.selKey] || null;
+    return null;
+  }
+
+  function paintDateSlot(slot, it) {
+    if (!slot) return;
+    slot.innerHTML = vdateHTML(it);
+  }
+
+  function openDateEditor(slot) {
+    if (!slot) return;
+    var it = dateItemOf(slot);
+    if (!it || it.type !== 'regular') return;
+    if (slot.querySelector('.vdedit')) {
+      var open = slot.querySelector('.vdate-inp');
+      if (open) { try { open.focus(); } catch (e) {} }
+      return;                                  /* 이미 열려 있으면 그 칸으로 커서만 */
+    }
+    slot.innerHTML = vdateEditHTML(it);
+    var inp = slot.querySelector('.vdate-inp');
+    if (!inp) return;
+    try { inp.focus({ preventScroll: true }); } catch (e) { try { inp.focus(); } catch (e2) {} }
+    /* 방금 누른 흐름 안이라 안드로이드 크롬·삼성 인터넷은 날짜 선택기를 바로 띄울 수 있다.
+       지원하지 않거나 막히면 조용히 넘기고, 칸을 다시 누르면 선택기가 뜨다. */
+    if (inp.showPicker) { try { inp.showPicker(); } catch (e) {} }
+  }
+
+  function cancelDateEditor(slot) {
+    var it = dateItemOf(slot);
+    if (!it) return;
+    paintDateSlot(slot, it);                   /* 저장하던 값은 버리고 원래 날짜로 */
+  }
+
+  function saveDateFromSlot(slot) {
+    var it = dateItemOf(slot);
+    if (!it || !slot) return;
+    var inp = slot.querySelector('.vdate-inp');
+    if (!inp) return;
+    var val = String(inp.value || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) { toast('날짜를 골라 주세요 (YYYY-MM-DD)'); return; }
+
+    var before = it.date || '';
+    if (val === before) { paintDateSlot(slot, it); return; }     /* 바뀐 게 없으면 그냥 되돌린다 */
+
+    var key = 'date:' + keyOf(it);
+    if (inFlight[key]) return;
+    inFlight[key] = true;
+
+    /* 낙관적 반영 — 화면 배지는 바로 새 날짜 */
+    it.date = val;
+    paintDateSlot(slot, it);
+    setStatus('busy');
+
+    srv('saveVisitDate', [it.type, it.row, val], function (res) {
+      inFlight[key] = false;
+      if (!res || res.ok !== true) { revert(res); return; }
+      it.date = res.visitDate || val;
+      refreshDateSlots(it);
+      setStatus('saved', res.savedAt || '');
+      if (window.navigator.vibrate) { try { navigator.vibrate(15); } catch (e) {} }
+    }, function () {
+      inFlight[key] = false;
+      revert(null);
+    });
+
+    function revert(res) {
+      it.date = before;
+      refreshDateSlots(it);
+      setStatus('failed');
+      var msg = (res && res.error) ? String(res.error) : '';
+      /* 예전 Apps Script가 배포돼 있으면 '알 수 없는 요청입니다: visitDate'가 온다 —
+         화면은 이미 새 것이므로 무엇을 해야 하는지 그대로 알려 준다. */
+      if (!msg || msg.indexOf('알 수 없는') >= 0) {
+        toast('Apps Script 코드 업데이트 후 배포가 필요합니다');
+      } else {
+        toast('방문일을 저장하지 못했습니다 · ' + msg);
       }
+    }
+  }
+
+  /** 그 항목의 알약(목록 카드·지도 하단 카드)을 모두 지금 값으로 다시 그린다 */
+  function refreshDateSlots(it) {
+    if (!it) return;
+    var cards = $('list').querySelectorAll('.card');
+    for (var i = 0; i < cards.length; i++) {
+      if (S.byKey[cards[i].dataset.key] !== it) continue;
+      paintDateSlot(cards[i].querySelector('.vdslot'), it);
+    }
+    if (M.selKey === keyOf(it) && !$('mapcard').hidden) {
+      paintDateSlot($('mapcard').querySelector('.vdslot'), it);
+    }
+  }
+
+  /** 방문일 알약·입력칸 클릭 처리 (목록·지도 카드 공통). 처리했으면 true */
+  function onDateAreaClick(ev) {
+    var t = ev.target;
+    var edit = t.closest('[data-act="edit-date"]');
+    if (edit) { ev.preventDefault(); openDateEditor(edit.closest('.vdslot')); return true; }
+    var save = t.closest('[data-act="date-save"]');
+    if (save) { ev.preventDefault(); saveDateFromSlot(save.closest('.vdslot')); return true; }
+    var cancel = t.closest('[data-act="date-cancel"]');
+    if (cancel) { ev.preventDefault(); cancelDateEditor(cancel.closest('.vdslot')); return true; }
+    /* 날짜 입력칸 안을 누른 것은 완료 체크가 아니라 날짜 고르기로 */
+    if (t.closest('.vdedit')) return true;
+    return false;
+  }
+
+  /** 날짜 입력칸에서 Enter=저장, Esc=취소 */
+  function onDateAreaKey(ev) {
+    var t = ev.target;
+    if (!t || !t.classList || !t.classList.contains('vdate-inp')) return;
+    if (ev.key === 'Enter' || ev.keyCode === 13) {
+      ev.preventDefault(); saveDateFromSlot(t.closest('.vdslot'));
+    } else if (ev.key === 'Escape' || ev.keyCode === 27) {
+      ev.preventDefault(); cancelDateEditor(t.closest('.vdslot'));
     }
   }
 
@@ -1540,6 +1700,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   /* ── 이벤트 ───────────────────────────────────────── */
   $('list').addEventListener('click', function (ev) {
+    /* 방문일 알약 → 날짜 입력칸 / 저장 / 취소 (완료 체크와 겹치지 않게 먼저 처리) */
+    if (onDateAreaClick(ev)) return;
     /* 카드의 [지도] — 앱 안 지도 탭으로 전환해 그 중개사 핀으로 확대·이동 */
     var mapBtn = ev.target.closest('[data-act="inappmap"]');
     if (mapBtn) {
@@ -1554,6 +1716,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (!top) return;
     onToggle(top.closest('.card'));
   });
+
+  $('list').addEventListener('keydown', onDateAreaKey);
 
   $('list').addEventListener('input', function (ev) {
     if (!ev.target.classList || !ev.target.classList.contains('memo')) return;
@@ -1633,6 +1797,9 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     render();
     $('q').focus();
   });
+
+  $('mapcard').addEventListener('click', onDateAreaClick);
+  $('mapcard').addEventListener('keydown', onDateAreaKey);
 
   /* 지도 하단 카드 */
   function closeMapCard() {
