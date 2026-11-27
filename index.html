@@ -134,6 +134,9 @@ button.vdate{flex:0 0 auto;display:inline-flex;align-items:center;justify-conten
   border-radius:999px;padding:0 6px;cursor:pointer;font-feature-settings:"tnum"}
 .card.done button.vdate{color:#2F6E5E;background:#DFF1E9;border-color:#CFE7DC}
 button.vdate:active{background:#D3EBE2;transform:scale(.97)}
+button.vdate{position:relative}
+/* 손가락이 닿는 높이를 아래로만 넓힌다(위는 메타 글자·아래는 버튼 줄과 겹치지 않게) */
+button.vdate:after{content:"";position:absolute;left:0;right:0;top:-2px;bottom:-8px;border-radius:999px}
 button.vdate.add{color:#5E8077;background:#fff;border:1px dashed #BCD5CD;font-weight:700;padding:0 5px}
 /* 날짜 입력칸 — 모바일 날짜 선택기와 직접 입력이 모두 되도록 input[type=date] */
 .vdedit{display:flex;align-items:center;gap:4px;margin:1px 0 0;flex-wrap:nowrap;min-width:0}
