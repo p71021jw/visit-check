@@ -168,6 +168,37 @@ button.vdate.add{color:#5E8077;background:#fff;border:1px dashed #BCD5CD;font-we
 .btn:active{transform:scale(.985);background:#F3F8F6}
 .memo{width:100%;margin-top:8px;padding:9px 10px;border-radius:9px;border:1px solid #E1EBE7;background:#FBFDFC;
   font:inherit;font-size:11.5px;color:var(--ink)}
+/* ── 잔금 카드 (잔금 탭) ── */
+.chkcol{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:3px}
+.chkcap{font-size:8.5px;font-weight:600;line-height:1.1;color:var(--sub);letter-spacing:-.02em;white-space:nowrap}
+.card.done .chkcap{color:#0B5B4E}
+.when{display:inline-flex;align-items:center;height:19px;padding:0 6px;border-radius:6px;
+  background:var(--mint);border:1px solid #CBE7DC;color:#0B7F6B;font-size:10.5px;font-weight:800;
+  letter-spacing:-.01em;font-feature-settings:"tnum";white-space:nowrap}
+.when.t{background:#fff;border-color:#DDE8E4;color:#4C635C;font-weight:700}
+.cust{font-style:normal;font-size:15px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.card.done .cust{color:#3D7A6B}
+.broker{margin:1px 0 5px;font-size:12px;font-weight:600;line-height:1.3;color:#2C544A}
+.broker .none{color:#A5B7B1;font-weight:500}
+.blines{display:grid;grid-template-columns:52px minmax(0,1fr);gap:1px 6px;margin:0;
+  font-size:10.5px;line-height:1.5;font-weight:600;color:#3F5A53}
+.blines b{font-weight:500;color:#8B9C95}
+.blines i{font-style:normal;word-break:break-all}
+.blines i.amt{color:#0B5B4E;font-weight:800;font-feature-settings:"tnum"}
+.cond{margin:4px 0 0;font-size:10px;line-height:1.45;color:#7C8E87;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
+.afterrow{margin:7px 0 0}
+.bchk{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px 0 6px;border-radius:999px;
+  border:1px dashed #C2D7CF;background:#fff;color:#5E726B;font:inherit;font-size:10.5px;font-weight:600;
+  cursor:pointer;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.bchk .bx{width:15px;height:15px;border-radius:4px;border:1.6px solid #B9CFC7;background:#fff;
+  display:grid;place-items:center;flex:0 0 auto}
+.bchk .bx svg{width:10px;height:10px;fill:none;stroke:#fff;stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round;
+  opacity:0;transform:scale(.6);transition:.15s}
+.bchk.on{border-style:solid;border-color:#8ACBB8;background:#E9F4F0;color:#0B5B4E}
+.bchk.on .bx{background:linear-gradient(145deg,#14AB8D,#00796A);border-color:#00796A}
+.bchk.on .bx svg{opacity:1;transform:scale(1)}
+.bchk:active{transform:scale(.97)}
 .memo::placeholder{color:#A5B7B1}
 .memo:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.1)}
 .sec{display:flex;align-items:center;gap:7px;margin:10px 2px 1px;font-size:10px;font-weight:700;color:#6D8279;letter-spacing:.02em}
@@ -348,7 +379,7 @@ body.hist-open{overflow:hidden}
 <header class="hero">
   <div class="brand"><b>하나은행</b><i></i><span>죽전점 SR</span><span class="badge" id="badge">2026.12</span></div>
   <h1>방문관리 체크표</h1>
-  <p class="hero-sub">월 1회 순회 + 개별 일정 · 체크하면 시트에 바로 저장</p>
+  <p class="hero-sub">월 1회 순회 + 잔금 관리 · 체크하면 시트에 바로 저장</p>
 </header>
 
 <section class="summary" aria-label="진행 현황">
@@ -361,7 +392,7 @@ body.hist-open{overflow:hidden}
   <div class="bar"><i id="bar-fill"></i></div>
   <div class="sumnote">
     <span id="sum-reg">정기 현황</span>
-    <span id="sum-ind">개별 일정</span>
+    <span id="sum-ind">잔금</span>
   </div>
 </section>
 
@@ -379,7 +410,7 @@ body.hist-open{overflow:hidden}
   <div class="search" id="searchrow">
     <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 20 20"/></svg>
     <input id="q" type="search" inputmode="search" enterkeyhint="search" autocomplete="off"
-           placeholder="중개사명·권역·소재지 검색" aria-label="중개사 검색">
+           placeholder="중개사·고객·주소 검색" aria-label="중개사 검색">
     <button id="q-clear" type="button" aria-label="검색어 지우기">✕</button>
   </div>
   <div class="sresult" id="sresult" hidden></div>
@@ -404,7 +435,7 @@ body.hist-open{overflow:hidden}
   <div class="mapnote" id="mapnote"></div>
 </section>
 
-<p class="foot"><span id="foot">정기방문_체크표 · 개별_영업일정 시트와 실시간 연동</span><br>
+<p class="foot"><span id="foot">정기방문_체크표 · 잔금_관리 시트와 실시간 연동</span><br>
   <button id="lock-btn" type="button" aria-label="잠금 화면으로 돌아가기">🔒 잠금 (비밀번호 다시 입력)</button></p>
 
 <div class="mapcard" id="mapcard" hidden>
@@ -475,7 +506,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     { k: '2주차', label: '2주차' },
     { k: '3주차', label: '3주차' },
     { k: '4주차', label: '4주차' },
-    { k: '개별', label: '개별' }
+    /* 개별 탭을 잔금관리용으로 개편 — 잔금_관리 시트를 읽는다 */
+    { k: '잔금', label: '잔금' }
   ];
   var MEMO_DELAY = 700;      // 메모 자동 저장 지연(ms)
   var ICON_PHONE = '<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6.4 3.6h3.1l1.5 4.1-2 1.4a12.2 12.2 0 0 0 5.9 5.9l1.4-2 4.1 1.5v3.1a2 2 0 0 1-2.2 2A16.8 16.8 0 0 1 4.4 5.8a2 2 0 0 1 2-2.2z"/></svg>';
@@ -501,7 +533,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     ready: false,
     loading: true,
     reg: [],
-    ind: [],
+    bal: [],
+    balMissing: false,
     byKey: {},
     seqByKey: {},
     allSeqByKey: {},
@@ -540,7 +573,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   function firstLine(s) { return String(s || '').split('\n')[0]; }
 
-  function keyOf(it) { return (it.type === 'regular' ? 'r' : 'i') + it.row; }
+  function keyOf(it) {
+    if (it.type === 'regular') return 'r' + it.row;
+    if (it.type === 'balance') return 'b' + it.row;
+    return 'i' + it.row;
+  }
 
   function hhmm() {
     var d = new Date();
@@ -576,6 +613,14 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (!m) return String(s || '');
     if (m[1] === String(new Date().getFullYear())) return m[2] + '.' + m[3];
     return m[1].substr(2) + '.' + m[2] + '.' + m[3];
+  }
+
+  /** '2026-11-28' → '금' (요일) */
+  function weekdayKo(s) {
+    var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return '';
+    var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+    return '일월화수목금토 '.charAt(d.getDay()).trim();
   }
 
   /** 연락처 글자에서 실제 전화번호만 뽑는다(휴대폰 우선). */
@@ -668,7 +713,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   }
 
   /** 지도 링크 — 시트 좌표(M·N열)가 있으면 그 좌표에 핀을 꽂은 화면(look)으로 바로 열고,
-      좌표가 없을 때(예: 개별 일정)만 주소로, 주소도 없으면 상호로 검색한다. */
+      좌표가 없을 때만 주소로, 주소도 없으면 상호로 검색한다. */
   function mapHref(addr, name, lat, lng) {
     var webUrl;
     if (hasLL(lat, lng)) {
@@ -773,7 +818,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     } else if (method === 'getHistory') {
       task = apiGet('history', { name: args[0] });
     } else if (method === 'toggleCheck') {
-      task = apiPost({ action: 'toggle', sheetType: args[0], row: args[1], checked: args[2] });
+      task = apiPost({ action: 'toggle', sheetType: args[0], row: args[1], checked: args[2], field: args[3] || '' });
     } else if (method === 'saveMemo') {
       task = apiPost({ action: 'memo', sheetType: args[0], row: args[1], memo: args[2] });
     } else if (method === 'saveVisitDate') {
@@ -812,7 +857,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   function lockOut(msg) {
     savePass('');
     S.reg = [];
-    S.ind = [];
+    S.bal = [];
     S.byKey = {};
     S.ready = false;
     S.loading = false;
@@ -947,48 +992,70 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
   /* ── 집계 ─────────────────────────────────────────── */
   function scopeItems() {
-    if (S.tab === '개별') return S.ind;
-    if (S.tab === '전체') return S.reg.concat(S.ind);
+    if (S.tab === '잔금') return S.bal;
+    /* 전체 탭은 정기방문만 깔끔하게 — 잔금은 잔금 탭에서만 본다 */
+    if (S.tab === '전체') return S.reg;
     return S.reg.filter(function (it) { return it.week === S.tab; });
   }
 
   function pctOf(done, total) { return total ? Math.round(done / total * 100) : 0; }
 
+  /** 잔금 탭 순서 — 잔금완료가 안 된 잔금부터(잔금일 빠른 순), 완료된 잔금은 최근 순 */
+  function sortBal() {
+    S.bal.sort(function (a, b) {
+      var da = a.checked ? 1 : 0, db = b.checked ? 1 : 0;
+      if (da !== db) return da - db;
+      var x = String(a.date || '9999-12-31'), y = String(b.date || '9999-12-31');
+      if (x !== y) return da === 0 ? (x < y ? -1 : 1) : (x > y ? -1 : 1);
+      return Number(a.row) - Number(b.row);
+    });
+  }
+
   function updateSummary() {
     var rows = scopeItems();
-    var done = 0;
-    for (var i = 0; i < rows.length; i++) if (rows[i].checked) done++;
+    var done = 0, after = 0;
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].checked) done++;
+      if (rows[i].type === 'balance' && rows[i].after) after++;
+    }
     var pct = pctOf(done, rows.length);
     $('sum-total').textContent = rows.length;
     $('sum-done').textContent = done;
     $('sum-left').textContent = rows.length - done;
     $('sum-pct').textContent = pct + '%';
-    $('sum-scope').textContent = S.tab === '개별' ? '개별 일정' : S.tab;
+    $('sum-scope').textContent = S.tab;
+    var leftCap = $('sum-left').parentNode.querySelector('span');
+    if (leftCap) leftCap.textContent = (S.tab === '잔금') ? '미완료' : '미방문';
     $('bar-fill').style.width = pct + '%';
 
-    var rd = 0, idone = 0;
+    var rd = 0, bdone = 0, bafter = 0;
     S.reg.forEach(function (it) { if (it.checked) rd++; });
-    S.ind.forEach(function (it) { if (it.checked) idone++; });
+    S.bal.forEach(function (it) { if (it.checked) bdone++; if (it.after) bafter++; });
     $('sum-reg').innerHTML = '정기 <b>' + S.reg.length + '곳</b> · 완료 <b>' + rd + '</b> (' + pctOf(rd, S.reg.length) + '%)';
-    $('sum-ind').innerHTML = '개별 <b>' + S.ind.length + '건</b> · 완료 <b>' + idone + '</b>';
+    $('sum-ind').innerHTML = '잔금 <b>' + S.bal.length + '건</b> · 완료 <b>' + bdone + '</b> · 후방문 <b>' + bafter + '</b>';
 
     /* 탭 바로 아래 한 줄 — 지금 보고 있는 범위의 건수와 완료 수 */
     var sdone = 0;
     for (var k = 0; k < rows.length; k++) if (rows[k].checked) sdone++;
-    var scopeName = S.tab === '개별' ? '개별 일정' : S.tab;
-    var unit = S.tab === '개별' ? '건' : '곳';
+    var scopeName = S.tab;
+    var unit = (S.tab === '잔금') ? '건' : '곳';
     var sr = $('sresult');
     sr.hidden = false;
-    sr.innerHTML = S.q
-      ? '<span>‘' + esc(S.q) + '’ 검색 <b>' + visibleItems().length + '</b>건</span><span>' + esc(scopeName) + ' 안에서</span>'
-      : '<span>' + esc(scopeName) + ' <b>' + rows.length + '</b>' + unit + '</span>' +
+    if (S.q) {
+      sr.innerHTML = '<span>‘' + esc(S.q) + '’ 검색 <b>' + visibleItems().length + '</b>건</span><span>' + esc(scopeName) + ' 안에서</span>';
+    } else if (S.tab === '잔금') {
+      sr.innerHTML = '<span>잔금 <b>' + rows.length + '</b>건</span>' +
+        '<span>잔금완료 <b>' + sdone + '</b> · 남음 <b>' + (rows.length - sdone) + '</b> · 후방문 <b>' + after + '</b></span>';
+    } else {
+      sr.innerHTML = '<span>' + esc(scopeName) + ' <b>' + rows.length + '</b>' + unit + '</span>' +
         '<span>완료 <b>' + sdone + '</b> · 미완료 <b>' + (rows.length - sdone) + '</b></span>';
+    }
 
     /* 지도 힌트 */
     var hint = $('vhint');
     if (S.view === 'map') {
       var pinned = mappableItems().length;
-      hint.textContent = S.tab === '개별' ? '개별 일정은 지도 좌표가 없습니다' : (pinned + '곳 번호 핀');
+      hint.textContent = (S.tab === '잔금') ? '잔금은 목록에서만 봅니다' : (pinned + '곳 번호 핀');
     } else {
       hint.textContent = '';
     }
@@ -1012,7 +1079,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (it.type === 'regular') {
       hay = [it.name, it.week, it.course, it.grade, it.addr, it.note, it.memo, it.tel].join(' ');
     } else {
-      hay = [it.client, it.date, it.time, it.kind, it.item, it.contact, it.memo].join(' ');
+      hay = [it.client, it.broker, it.place, it.branch, it.lawyer, it.cond, it.memo,
+             it.date, it.time].filter(Boolean).join(' ');
     }
     return hay.toLowerCase().indexOf(S.q) >= 0;
   }
@@ -1050,7 +1118,57 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   }
 
   /* ── 카드 ─────────────────────────────────────────── */
+  /** 잔금 카드 — 잔금일·시간 · 고객명 · 중개사(점선=이력 팝업) · 잔금장소 · 실행지점 · 법무사 · 금액 · 조건
+      · 잔금완료(큰 체크) · 잔금후방문(별도 알약 체크) · 결과메모 */
+  function balCardHTML(it) {
+    var key = keyOf(it);
+    var on = !!it.checked;                     /* 큰 체크 = 잔금완료 */
+    var memoVal = (it.draft !== undefined) ? it.draft : it.memo;
+    var wd = weekdayKo(it.date);
+    var when = it.date ? (shortDay(it.date) + (wd ? '(' + wd + ')' : '')) : '잔금일 미정';
+
+    var broker = it.broker
+      ? '<button class="nm" type="button" data-act="hist" aria-label="' + esc(it.broker) + ' 잔금 이력 보기">' + esc(it.broker) + '</button>'
+      : '<span class="none">(중개사 미입력)</span>';
+
+    var amtTxt = (it.amount !== null && it.amount !== undefined && it.amount !== '')
+      ? manText(it.amount) : '—';
+    var bl = '';
+    if (it.place) bl += '<b>잔금장소</b><i>' + esc(it.place) + '</i>';
+    if (it.branch) bl += '<b>실행지점</b><i>' + esc(it.branch) + '</i>';
+    if (it.lawyer) bl += '<b>법무사</b><i>' + esc(it.lawyer) + '</i>';
+    bl += '<b>금액</b><i class="amt">' + esc(amtTxt) + '</i>';
+
+    return '<article class="card bal' + (on ? ' done' : '') + '" data-key="' + key +
+        '" data-type="balance" data-row="' + it.row + '">' +
+      '<div class="card-top">' +
+        '<div class="chkcol">' +
+          '<button class="check" type="button" data-act="toggle" role="checkbox" aria-checked="' + on +
+            '" aria-label="' + esc((it.client || '') + ' 잔금완료') + '">' +
+            '<svg viewBox="0 0 24 24"><path d="M4.5 12.6l5 5L19.5 7.2"/></svg></button>' +
+          '<span class="chkcap">잔금완료</span>' +
+        '</div>' +
+        '<div class="info">' +
+          '<h2 class="name"><span class="when">' + esc(when) + '</span>' +
+            (it.time ? '<span class="when t">' + esc(it.time) + '</span>' : '') +
+            '<em class="cust">' + esc(it.client || '(고객명 미입력)') + '</em></h2>' +
+          '<p class="broker">' + broker + '</p>' +
+          '<div class="blines">' + bl + '</div>' +
+          (it.cond ? '<p class="cond">' + esc(it.cond) + '</p>' : '') +
+          '<div class="afterrow">' +
+            '<button class="bchk' + (it.after ? ' on' : '') + '" type="button" data-act="after"' +
+              ' aria-pressed="' + (!!it.after) + '" aria-label="' + esc((it.client || '') + ' 잔금후방문 완료') + '">' +
+              '<i class="bx"><svg viewBox="0 0 24 24"><path d="M4.5 12.6l5 5L19.5 7.2"/></svg></i>잔금후방문 완료</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+      '<input class="memo" type="text" inputmode="text" enterkeyhint="done" autocomplete="off" placeholder="결과·메모 (자동 저장)"' +
+        ' aria-label="' + esc((it.client || '') + ' 잔금 메모') + '" value="' + esc(memoVal) + '">' +
+    '</article>';
+  }
+
   function cardHTML(it) {
+    if (it.type === 'balance') return balCardHTML(it);
     var key = keyOf(it);
     var on = !!it.checked;
     var memoVal = (it.draft !== undefined) ? it.draft : it.memo;
@@ -1074,16 +1192,6 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       mapURL = mapHref(it.addr, it.name, it.lat, it.lng);
       mapLabel = '지도';
       memoPh = '상담·방문 메모 (자동 저장)';
-    } else {
-      head = esc(it.client || '(거래처 미입력)') + (it.date ? '<span class="chip date">' + esc(shortDate(it.date)) + '</span>' : '');
-      var line2 = [it.time, it.kind].filter(Boolean).join(' · ') || '개별 일정';
-      metas.push('<span class="wk">' + esc(line2) + '</span>');
-      if (it.item) metas.push('<span>' + esc(it.item) + '</span>');
-      if (it.contact) metas.push('<span>' + esc(it.contact) + '</span>');
-      tel = telOf(it.contact);
-      mapURL = mapHref(it.contact, it.client, it.lat, it.lng);
-      mapLabel = '지도';
-      memoPh = '결과·메모 (자동 저장)';
     }
 
     var telBtn = tel
@@ -1097,7 +1205,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
     /* 좌표가 있는 정기방문이면 [지도]는 외부 카카오맵 앱으로 나가지 않고
        앱 안 지도 탭의 그 핀으로 넘어간다(data-act="inappmap").
-       좌표가 없는 곳·개별 일정은 지금처럼 카카오맵 링크로 연다. */
+       좌표가 없는 곳은 지금처럼 카카오맵 링크로 연다. */
     var inApp = canMapInApp(it);
 
     return '<article class="card' + (on ? ' done' : '') + '" data-key="' + key + '" data-type="' + it.type +
@@ -1131,29 +1239,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     $('searchrow').hidden = (S.view === 'map');
     if (S.view === 'map') $('sresult').hidden = true;
     /* 지도 탭을 벗어나면 위치 추적을 멈춰 배터리를 줄인다 */
-    if (S.view !== 'map' || S.tab === '개별') stopMyLoc();
+    if (S.view !== 'map' || S.tab === '잔금') stopMyLoc();
 
     if (S.view === 'list') {
       var rows = visibleItems();
-      var html = '';
-      if (S.tab === '전체' && !S.q) {
-        var regs = S.reg.filter(matchesQuery);
-        var inds = S.ind.filter(matchesQuery);
-        if (inds.length) {
-          /* 개별 일정이 있으면 그것부터 맨 위에 — 먼저 처리해야 하는 일정이 위로 올라온다 */
-          html += '<div class="sec">개별 영업일정 ' + inds.length + '건</div>';
-          html += inds.map(cardHTML).join('');
-          if (regs.length) {
-            html += '<div class="sec">정기방문 ' + regs.length + '곳</div>';
-            html += regs.map(cardHTML).join('');
-          }
-        } else {
-          /* 개별 일정이 없으면 구분선 없이 정기방문 카드만 (1~4주차 탭처럼 첫 카드가 바로) */
-          html += regs.map(cardHTML).join('');
-        }
-      } else {
-        html = rows.map(cardHTML).join('');
-      }
+      var html = rows.map(cardHTML).join('');
       $('list').innerHTML = html;
 
       var emptyEl = $('empty');
@@ -1161,7 +1251,15 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
         emptyEl.hidden = true;
       } else {
         emptyEl.hidden = false;
-        emptyEl.textContent = S.q ? ('‘' + S.q + '’ 검색 결과가 없습니다') : '표시할 항목이 없습니다';
+        if (S.q) emptyEl.textContent = '‘' + S.q + '’ 검색 결과가 없습니다';
+        else if (S.tab === '잔금') {
+          emptyEl.textContent = S.balMissing
+            ? 'Apps Script 새 버전을 배포하면 잔금 일정이 여기에 나옵니다.\n(배포 전이라도 정기방문 체크는 그대로 동작합니다)'
+            : '잔금 일정이 없습니다.\n캘린더에 잔금 일정이 잡히면 매일 08:30 자동으로 들어옵니다.';
+          emptyEl.style.whiteSpace = 'pre-line';
+        } else {
+          emptyEl.textContent = '표시할 항목이 없습니다';
+        }
       }
     } else {
       $('empty').hidden = true;
@@ -1385,8 +1483,8 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     if (!M.selKey) document.body.classList.remove('mc-open');
     fitMapBox();          /* 카드가 열려 있으면 지도를 카드 위까지로 줄인다 */
     var items = mappableItems();
-    if (S.tab === '개별') {
-      mapNote('개별 일정은 지도 좌표가 없습니다. 목록 탭에서 보세요.');
+    if (S.tab === '잔금') {
+      mapNote('잔금 일정은 지도 좌표가 없습니다. 잔금 탭의 목록에서 보세요.');
       clearOverlays();
       return;
     }
@@ -1630,6 +1728,12 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     card.classList.toggle('done', !!it.checked);
     var btn = card.querySelector('.check');
     if (btn) btn.setAttribute('aria-checked', String(!!it.checked));
+    /* 잔금후방문 — 잔금완료와 따로 도는 별도 체크 */
+    var aft = card.querySelector('.bchk');
+    if (aft) {
+      aft.classList.toggle('on', !!it.after);
+      aft.setAttribute('aria-pressed', String(!!it.after));
+    }
     if (it.type === 'regular') {
       /* 방문일 알약은 render 할 때와 같은 규칙으로 다시 그린다(날짜가 비면 알약도 사라짐) */
       paintDateSlot(card.querySelector('.vdslot'), it);
@@ -1639,7 +1743,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   /* ── 방문일 수기 수정 ─────────────────────────────── */
   /* 실수로 체크를 풀었다가 다시 체크하면 시트 K열 방문일이 '오늘'로 새로 찍힌다.
      그때 카드의 방문일 알약을 누르면 그 자리에서 날짜를 골라 바로 고쳐 쓸 수 있다.
-     (정기방문만 — 개별 일정의 날짜는 일정 날짜라 바꾸지 않는다) */
+     (정기방문만 — 잔금 일정의 잔금일은 일정 날짜라 바꾸지 않는다) */
 
   /** 방문일 자리 — 1차·2차·3차를 한 줄 알약으로, 끝에 새 방문일 추가(+) */
   function vdateHTML(it) {
@@ -1896,14 +2000,15 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     setStatus('busy');
     inFlight[key] = true;
 
-    srv('toggleCheck', [it.type, it.row, next], function (res) {
+    srv('toggleCheck', [it.type, it.row, next, it.type === 'balance' ? 'done' : ''], function (res) {
       inFlight[key] = false;
       card.classList.remove('pending');
       if (!res || res.ok !== true) { rollback(); return; }
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
+      if (it.type === 'balance') it.done = it.checked;
       /* 정기방문은 체크할 때 오늘 날짜가 3칸 규칙(밀어내기)으로 들어오고,
          같은 날 체크를 풀면 오늘 날짜만 빠지며 과거 방문일은 남는다.
-         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+         (잔금_관리의 잔금일은 일정 날짜라 건드리지 않는다) */
       if (it.type === 'regular') applyDates(it, res);
       applyCard(card, it);
       updateSummary();
@@ -1918,12 +2023,53 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
     function rollback() {
       it.checked = before;
+      if (it.type === 'balance') it.done = before;
       it.date = beforeDates[0]; it.date2 = beforeDates[1]; it.date3 = beforeDates[2];
       applyCard(card, it);
       updateSummary();
       syncMapItem(it);
       setStatus('failed');
       toast('체크를 저장하지 못했습니다 · 시트 연결을 확인해 주세요');
+    }
+  }
+
+  /* ── 잔금후방문 체크 (잔금완료와 독립) ───────────────── */
+  function onAfterToggle(card) {
+    var key = card.dataset.key;
+    var it = S.byKey[key];
+    if (!it || it.type !== 'balance') return;
+    var ikey = key + ':after';
+    if (inFlight[ikey]) return;
+
+    var next = !it.after;
+    var before = it.after;
+    it.after = next;
+    applyCard(card, it);
+    updateSummary();
+    card.classList.add('pending');
+    setStatus('busy');
+    inFlight[ikey] = true;
+
+    srv('toggleCheck', ['balance', it.row, next, 'after'], function (res) {
+      inFlight[ikey] = false;
+      card.classList.remove('pending');
+      if (!res || res.ok !== true) { rollback(); return; }
+      it.after = (typeof res.checked === 'boolean') ? res.checked : next;
+      applyCard(card, it);
+      updateSummary();
+      setStatus('saved', res.savedAt || '');
+      if (window.navigator.vibrate) { try { navigator.vibrate(it.after ? 18 : 10); } catch (e) {} }
+      if (it.after) toast('잔금후방문 완료로 체크했습니다');
+    }, function () { rollback(); });
+
+    function rollback() {
+      inFlight[ikey] = false;
+      card.classList.remove('pending');
+      it.after = before;
+      applyCard(card, it);
+      updateSummary();
+      setStatus('failed');
+      toast('잔금후방문 체크를 저장하지 못했습니다 · 시트 연결을 확인해 주세요');
     }
   }
 
@@ -1981,7 +2127,10 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   /* ── 데이터 불러오기 ──────────────────────────────── */
   function normalize(it) {
     it.draft = undefined;
+    /* 잔금 카드는 큰 체크 하나를 '잔금완료'로 쓴다 — 서버의 done 을 checked 로 옮겨 담는다 */
+    if (it.type === 'balance') it.checked = !!it.done;
     if (typeof it.checked !== 'boolean') it.checked = (it.checked === true);
+    if (it.type === 'balance') it.after = !!it.after;
     if (!it.memo) it.memo = '';
     it.date = normVisitDate(it.date);
     it.date2 = normVisitDate(it.date2);
@@ -2021,9 +2170,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
         return;
       }
       S.reg = (res.regular || []).map(normalize);
-      S.ind = (res.individual || []).map(normalize);
+      S.bal = (res.balance || []).map(normalize);
+      S.balMissing = (res.balance === undefined || res.balance === null);
+      sortBal();
       S.byKey = {};
-      S.reg.concat(S.ind).forEach(function (it) { S.byKey[keyOf(it)] = it; });
+      S.reg.concat(S.bal).forEach(function (it) { S.byKey[keyOf(it)] = it; });
       buildSeq();
       S.summary = res.summary || null;
       S.fetchedAt = res.fetchedAt || '';
@@ -2034,11 +2185,11 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       render();
       setStatus('ready');
       if (res.summary) {
-        $('foot').textContent = '정기방문_체크표 ' + res.summary.regularTotal + '곳 + 개별_영업일정 ' +
-          res.summary.individualTotal + '건 · 불러온 시각 ' + S.fetchedAt.substr(11, 5);
+        $('foot').textContent = '정기방문_체크표 ' + S.reg.length + '곳 + 잔금_관리 ' +
+          S.bal.length + '건 · 불러온 시각 ' + S.fetchedAt.substr(11, 5);
       }
       /* 지도 탭으로 들어왔고 좌표가 있으면 바로 지도 준비 */
-      if (S.view === 'map' && S.tab !== '개별') initMap();
+      if (S.view === 'map' && S.tab !== '잔금') initMap();
       finish(true);
     }, function (err) {
       if (err && err.auth) { finish(false); return; }
@@ -2061,7 +2212,15 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       ev.preventDefault();
       var hcard = nmBtn.closest('.card');
       var hit = hcard ? S.byKey[hcard.dataset.key] : null;
-      openHistory((hit && hit.name) || nmBtn.textContent);
+      openHistory((hit && (hit.name || hit.broker)) || nmBtn.textContent);
+      return;
+    }
+    /* 잔금후방문 알약 → 별도 체크 토글 */
+    var aftBtn = ev.target.closest('[data-act="after"]');
+    if (aftBtn) {
+      ev.preventDefault();
+      var acard = aftBtn.closest('.card');
+      if (acard) onAfterToggle(acard);
       return;
     }
     /* 방문일 알약 → 날짜 입력칸 / 저장 / 취소 (완료 체크와 겹치지 않게 먼저 처리) */
@@ -2106,7 +2265,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
     var prevTab = S.tab;
     S.tab = tab.dataset.tab;
     /* 탭이 바뀌면 앞 탭에서 열어 둔 지도 하단 카드를 닫는다 — 새 탭 화면에 남지 않게.
-       (개별 탭으로 갈 때뿐 아니라 전체↔1~4주차 어디로 옮겨도 동일하게 적용) */
+       (잔금 탭으로 갈 때뿐 아니라 전체↔1~4주차 어디로 옮겨도 동일하게 적용) */
     if (S.tab !== prevTab) closeMapCard();
     render();
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -2196,7 +2355,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   /* 앱을 벗어나면 추적 중지, 돌아오면 재개 */
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) { stopMyLoc(); return; }
-    if (S.view === 'map' && S.tab !== '개별' && M.ready) startMyLoc();
+    if (S.view === 'map' && S.tab !== '잔금' && M.ready) startMyLoc();
   });
 
   $('mc-done').addEventListener('click', function () {
@@ -2222,7 +2381,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
       it.checked = (typeof res.checked === 'boolean') ? res.checked : next;
       /* 정기방문은 체크할 때 오늘 날짜가 3칸 규칙(밀어내기)으로 들어오고,
          같은 날 체크를 풀면 오늘 날짜만 빠지며 과거 방문일은 남는다.
-         (개별 영업일정의 date 는 일정 날짜라 건드리지 않는다) */
+         (잔금_관리의 잔금일은 일정 날짜라 건드리지 않는다) */
       if (it.type === 'regular') applyDates(it, res);
       showMapCard(it);
       renderMapPinsOnly();
