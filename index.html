@@ -178,12 +178,15 @@ button.vdate.add{color:#5E8077;background:#fff;border:1px dashed #BCD5CD;font-we
 .when.t{background:#fff;border-color:#DDE8E4;color:#4C635C;font-weight:700}
 .cust{font-style:normal;font-size:15px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
 .card.done .cust{color:#3D7A6B}
-.broker{margin:1px 0 5px;font-size:12px;font-weight:600;line-height:1.3;color:#2C544A}
-.broker .none{color:#A5B7B1;font-weight:500}
 .blines{display:grid;grid-template-columns:52px minmax(0,1fr);gap:1px 6px;margin:0;
   font-size:10.5px;line-height:1.5;font-weight:600;color:#3F5A53}
 .blines b{font-weight:500;color:#8B9C95}
 .blines i{font-style:normal;word-break:break-all}
+/* 중개사는 표의 첫 줄(중개사 → 잔금장소 → 실행지점 → 법무사 → 금액) — 글자 크기·굵기·줄맞춤은
+   옆 줄과 같게 두고, 눌러서 잔금 이력이 뜬다는 것만 짙은 초록 점선 밑줄로 알린다 */
+.blines .nm{border-bottom:1px dotted rgba(14,78,67,.60)}
+.card.done .blines .nm{border-bottom-color:rgba(14,78,67,.45)}
+.blines .none{color:#A5B7B1;font-weight:500}
 .blines i.amt{color:#0B5B4E;font-weight:800;font-feature-settings:"tnum"}
 .cond{margin:4px 0 0;font-size:10px;line-height:1.45;color:#7C8E87;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line}
@@ -1124,7 +1127,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
   }
 
   /* ── 카드 ─────────────────────────────────────────── */
-  /** 잔금 카드 — 잔금일·시간 · 고객명 · 중개사(점선=이력 팝업) · 잔금장소 · 실행지점 · 법무사 · 금액 · 조건
+  /** 잔금 카드 — 잔금일·시간 · 고객명 / 표: 중개사(점선=이력 팝업) · 잔금장소 · 실행지점 · 법무사 · 금액 / 조건
       · 잔금완료(큰 체크) 바로 아래 잔금후방문(같은 크기 앰버 체크) · 결과메모 */
   function balCardHTML(it) {
     var key = keyOf(it);
@@ -1139,7 +1142,7 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
 
     var amtTxt = (it.amount !== null && it.amount !== undefined && it.amount !== '')
       ? manText(it.amount) : '—';
-    var bl = '';
+    var bl = '<b>중개사</b><i>' + broker + '</i>';
     if (it.place) bl += '<b>잔금장소</b><i>' + esc(it.place) + '</i>';
     if (it.branch) bl += '<b>실행지점</b><i>' + esc(it.branch) + '</i>';
     if (it.lawyer) bl += '<b>법무사</b><i>' + esc(it.lawyer) + '</i>';
@@ -1162,7 +1165,6 @@ var KAKAO_JS_KEY = '6dec0cea3f5eefdc44ee5ec326f9840a';
           '<h2 class="name"><span class="when">' + esc(when) + '</span>' +
             (it.time ? '<span class="when t">' + esc(it.time) + '</span>' : '') +
             '<em class="cust">' + esc(it.client || '(고객명 미입력)') + '</em></h2>' +
-          '<p class="broker">' + broker + '</p>' +
           '<div class="blines">' + bl + '</div>' +
           (it.cond ? '<p class="cond">' + esc(it.cond) + '</p>' : '') +
         '</div>' +
