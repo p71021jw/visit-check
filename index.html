@@ -201,9 +201,10 @@ button.vdate.add{color:#5E8077;background:#fff;border:1px dashed #BCD5CD;font-we
   box-shadow:0 4px 10px rgba(180,83,9,.22)}
 .bchk.on svg{opacity:1;transform:scale(1)}
 .bchk:active{transform:scale(.95)}
-/* 라벨 '잔금 후 방문' — 46px 버튼 폭 안에 한 줄로 들어가게 글자만 조금 줄이고 가운데 정렬 */
-.chkcap.aft,.card.done .chkcap.aft{color:#8A520E;text-align:center;font-size:8px;letter-spacing:-.03em}
-.chkcap.aft.on{color:#7A3E06;font-weight:700}
+/* 라벨 '잔금 후 방문' — 위 '잔금완료'와 같은 글자 크기(8.5px)·굵기·줄높이를 그대로 쓰고,
+   색만 앰버로 두고 가운데 정렬. 46px 열 안에 한 줄로 들어가도록 자간만 살짝 좁힌다. */
+.chkcap.aft,.card.done .chkcap.aft{color:#8A520E;text-align:center;letter-spacing:-.03em}
+.chkcap.aft.on{color:#7A3E06}
 .memo::placeholder{color:#A5B7B1}
 .memo:focus{outline:none;border-color:#8ACBB8;background:#fff;box-shadow:0 0 0 3px rgba(21,171,141,.1)}
 .sec{display:flex;align-items:center;gap:7px;margin:10px 2px 1px;font-size:10px;font-weight:700;color:#6D8279;letter-spacing:.02em}
